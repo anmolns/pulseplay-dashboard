@@ -11,6 +11,7 @@ import { DashboardShell } from '@/components/layout/DashboardShell'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ProjectTable } from '@/components/projects/ProjectTable'
 import { Button } from '@/components/ui/button'
+import { useBreadcrumbs } from '@/components/layout/BreadcrumbsContext'
 
 const NewProjectModal = dynamic(
   () =>
@@ -20,6 +21,7 @@ const NewProjectModal = dynamic(
 
 export default function ProjectsPageClient() {
   const [modalOpen, setModalOpen] = useState(false)
+  const { set, clear } = useBreadcrumbs()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.projects,
@@ -35,11 +37,15 @@ export default function ProjectsPageClient() {
     }
   }, [data])
 
+  useEffect(() => {
+    set([{ label: 'Projects' }])
+    return () => clear()
+  }, [set, clear])
+
   return (
     <DashboardShell>
       <div className="pp-page">
         <PageHeader
-          breadcrumbs={[{ label: 'Projects' }]}
           title="Projects"
           actions={
             <Button

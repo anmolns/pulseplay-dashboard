@@ -48,7 +48,7 @@ export function TGTable({
   if (!targetGroups?.length) {
     return (
       <div className="px-6 py-20 text-center">
-        <h3 className="text-lg font-semibold text-[hsl(276,45%,28%)]">
+        <h3 className="text-lg font-semibold text-foreground">
           No target groups
         </h3>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -71,18 +71,11 @@ export function TGTable({
       </div>
 
       {targetGroups.map((tg) => (
-        <div
+        <button
           key={tg.id}
-          role="button"
-          tabIndex={0}
-          className="pp-data-row grid grid-cols-[1fr_80px_100px_140px_80px_80px_40px] items-center gap-4 px-6"
-          onClick={() =>
-            router.push(`/projects/${projectId}/target-groups/${tg.id}`)
-          }
-          onKeyDown={(e) => {
-            if (e.key === 'Enter')
-              router.push(`/projects/${projectId}/target-groups/${tg.id}`)
-          }}
+          type="button"
+          className="pp-data-row grid w-full grid-cols-[1fr_80px_100px_140px_80px_80px_40px] items-center gap-4 px-6 text-left"
+          onClick={() => router.push(`/projects/${projectId}/target-groups/${tg.id}`)}
         >
           <div className="flex min-w-0 items-center gap-3">
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -104,7 +97,7 @@ export function TGTable({
           </span>
           <span className="text-sm font-medium">{formatCpi(tg.base_cpi)}</span>
           <span />
-        </div>
+        </button>
       ))}
     </div>
   )

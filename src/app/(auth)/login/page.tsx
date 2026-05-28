@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Layers } from 'lucide-react'
+import Image from 'next/image'
 import api from '@/lib/api'
 import type { LoginResponse } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import logo from '@/assets/logo.png'
 
 const loginSchema = z.object({
   email: z
@@ -55,12 +56,14 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
-      <div className="hidden flex-1 flex-col justify-between bg-gradient-to-br from-[hsl(276,65%,42%)] via-[hsl(285,55%,38%)] to-[hsl(260,50%,28%)] p-12 text-white lg:flex">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur">
-            <Layers className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-semibold">PulsePlay</span>
+      <div className="hidden flex-1 flex-col justify-between bg-gradient-to-br from-[hsl(221,83%,45%)] via-[hsl(226,80%,38%)] to-[hsl(235,60%,28%)] p-12 text-white lg:flex">
+        <div className="flex items-center">
+          <Image
+            src={logo}
+            alt="PulsePlay"
+            className="h-14 w-auto max-w-[240px] object-contain"
+            priority
+          />
         </div>
         <div>
           <h2 className="text-3xl font-semibold leading-tight">
@@ -78,16 +81,16 @@ export default function LoginPage() {
 
       <div className="flex flex-1 items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-[400px]">
-          <div className="mb-8 flex items-center gap-2.5 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
-              <Layers className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-lg font-semibold text-[hsl(276,45%,28%)]">
-              PulsePlay
-            </span>
+          <div className="mb-8 flex justify-center lg:hidden">
+            <Image
+              src={logo}
+              alt="PulsePlay"
+              className="h-12 w-auto max-w-[220px] object-contain"
+              priority
+            />
           </div>
 
-          <h1 className="text-2xl font-semibold text-[hsl(276,45%,28%)]">
+          <h1 className="text-2xl font-semibold text-foreground">
             Sign in
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">

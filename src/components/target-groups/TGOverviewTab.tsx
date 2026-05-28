@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
 import api from '@/lib/api'
@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FillRateChart } from './FillRateChart'
 import { CpiLookupModal } from './CpiLookupModal'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { RateCardMatrixModal } from './RateCardMatrixModal'
 
 interface TGOverviewTabProps {
   projectId: string
@@ -51,10 +53,28 @@ export function TGOverviewTab({
   businessUnitId,
 }: TGOverviewTabProps) {
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
   const queryClient = useQueryClient()
   const [editingField, setEditingField] = useState<SettingField | null>(null)
   const [editValue, setEditValue] = useState('')
   const [cpiOpen, setCpiOpen] = useState(false)
+  const [rateCardOpen, setRateCardOpen] = useState(false)
+
+  // Allow header pricing dropdown to open this modal via `?cpi=1`.
+  // We must do this in an effect (not during render), and we should clear the
+  // param on close, otherwise the modal will reopen immediately.
+  useEffect(() => {
+    if (searchParams?.get('cpi') === '1') setCpiOpen(true)
+  }, [searchParams])
+
+  const handleCpiOpenChange = (next: boolean) => {
+    setCpiOpen(next)
+    if (!next && typeof pathname === 'string') {
+      router.replace(pathname)
+    }
+  }
 
   const { data: fillRate, isLoading: fillLoading, isError: fillError } = useQuery({
     queryKey: queryKeys.fillRate(projectId, tgId),
@@ -196,7 +216,7 @@ export function TGOverviewTab({
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-border shadow-card">
           <CardHeader>
-            <CardTitle className="text-base text-[hsl(276,45%,28%)]">Settings</CardTitle>
+            <CardTitle className="text-base text-foreground">Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {settings.map((row) => (
@@ -242,7 +262,7 @@ export function TGOverviewTab({
 
         <Card className="border-border shadow-card">
           <CardHeader>
-            <CardTitle className="text-base text-[hsl(276,45%,28%)]">Pricing</CardTitle>
+            <CardTitle className="text-base text-foreground">Pricing</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm">
@@ -259,13 +279,22 @@ export function TGOverviewTab({
                 <span className="font-medium">{formatCpi(tg.max_cpi)}</span>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="w-full border-primary/30 text-primary hover:bg-brand-light"
-              onClick={() => setCpiOpen(true)}
-            >
-              Lookup CPI from Rate Card
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                className="w-full border-primary/30 text-primary hover:bg-brand-light"
+                onClick={() => setCpiOpen(true)}
+              >
+                Lookup CPI
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full border-border bg-white text-foreground hover:bg-secondary/60"
+                onClick={() => setRateCardOpen(true)}
+              >
+                View Rate Card
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -276,7 +305,16 @@ export function TGOverviewTab({
         tg={tg}
         businessUnitId={businessUnitId}
         open={cpiOpen}
-        onOpenChange={setCpiOpen}
+        onOpenChange={handleCpiOpenChange}
+      />
+
+      <RateCardMatrixModal
+        open={rateCardOpen}
+        onOpenChange={setRateCardOpen}
+        projectId={projectId}
+        tgId={tgId}
+        tg={tg}
+        businessUnitId={businessUnitId}
       />
     </div>
   )

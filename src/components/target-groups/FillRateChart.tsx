@@ -72,7 +72,7 @@ export function FillRateChart({
               <Line
                 type="monotone"
                 dataKey="cumulative_completes"
-                stroke="hsl(276, 65%, 42%)"
+                stroke="hsl(221, 83%, 45%)"
                 strokeWidth={2}
                 dot={false}
               />

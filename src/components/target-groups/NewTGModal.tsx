@@ -124,9 +124,9 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto border-border bg-card shadow-elevated">
+      <DialogContent className="fixed right-0 top-0 h-screen w-full max-w-xl overflow-y-auto rounded-none border-l border-border bg-card shadow-elevated">
         <DialogHeader>
-          <DialogTitle className="text-[hsl(276,45%,28%)]">New Target Group</DialogTitle>
+          <DialogTitle className="text-foreground">New Target Group</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={handleSubmit((v) => mutation.mutate(v))}

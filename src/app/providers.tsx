@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { CpiCalcProvider } from '@/components/pricing/CpiCalcContext'
+import { BreadcrumbsProvider } from '@/components/layout/BreadcrumbsContext'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -14,7 +15,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <CpiCalcProvider>{children}</CpiCalcProvider>
+      <BreadcrumbsProvider>
+        <CpiCalcProvider>{children}</CpiCalcProvider>
+      </BreadcrumbsProvider>
     </QueryClientProvider>
   )
 }

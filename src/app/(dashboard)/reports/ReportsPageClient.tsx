@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import api from '@/lib/api'
@@ -10,6 +10,7 @@ import { DashboardShell } from '@/components/layout/DashboardShell'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { ReportTable } from '@/components/reports/ReportTable'
 import { Button } from '@/components/ui/button'
+import { useBreadcrumbs } from '@/components/layout/BreadcrumbsContext'
 
 const NewReportModal = dynamic(
   () => import('@/components/reports/NewReportModal').then((m) => m.NewReportModal),
@@ -18,6 +19,7 @@ const NewReportModal = dynamic(
 
 export default function ReportsPageClient() {
   const [modalOpen, setModalOpen] = useState(false)
+  const { set, clear } = useBreadcrumbs()
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.reports,
@@ -27,11 +29,15 @@ export default function ReportsPageClient() {
     },
   })
 
+  useEffect(() => {
+    set([{ label: 'Reports' }])
+    return () => clear()
+  }, [set, clear])
+
   return (
     <DashboardShell>
       <div className="pp-page">
         <PageHeader
-          breadcrumbs={[{ label: 'Reports' }]}
           title="Reports"
           subtitle="Request and download performance reports"
           actions={

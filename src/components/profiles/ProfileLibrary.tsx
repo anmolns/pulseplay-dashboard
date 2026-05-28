@@ -93,7 +93,7 @@ export function ProfileLibrary({
   return (
     <Card className="h-full border-border shadow-card">
       <CardHeader>
-        <CardTitle className="text-base text-[hsl(276,45%,28%)]">Profile Library</CardTitle>
+        <CardTitle className="text-base text-foreground">Profile Library</CardTitle>
         <div className="flex gap-2 pt-2">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />

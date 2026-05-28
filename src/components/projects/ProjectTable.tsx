@@ -18,8 +18,8 @@ interface ProjectTableProps {
 }
 
 export function ProjectTable({ projects, isLoading, isError }: ProjectTableProps) {
-  const router = useRouter()
   const [search, setSearch] = useState('')
+  const router = useRouter()
 
   const filtered = useMemo(() => {
     if (!projects) return []
@@ -82,15 +82,11 @@ export function ProjectTable({ projects, isLoading, isError }: ProjectTableProps
         </div>
 
         {filtered.map((project) => (
-          <div
+          <button
             key={project.id}
-            role="button"
-            tabIndex={0}
-            className="pp-data-row grid grid-cols-[1fr_160px_140px_140px_40px] items-center gap-4 px-6"
+            type="button"
+            className="pp-data-row grid w-full grid-cols-[1fr_160px_140px_140px_40px] items-center gap-4 px-6 text-left"
             onClick={() => router.push(`/projects/${project.id}`)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') router.push(`/projects/${project.id}`)
-            }}
           >
             <div className="flex min-w-0 items-start gap-3">
               <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -125,7 +121,7 @@ export function ProjectTable({ projects, isLoading, isError }: ProjectTableProps
             </span>
 
             <BarChart3 className="h-4 w-4 justify-self-end text-muted-foreground/50" />
-          </div>
+          </button>
         ))}
 
         {filtered.length === 0 && (

@@ -141,7 +141,7 @@ export function ConditionEditor({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-border bg-card shadow-elevated">
         <DialogHeader>
-          <DialogTitle className="text-[hsl(276,45%,28%)]">{title}</DialogTitle>
+          <DialogTitle className="text-foreground">{title}</DialogTitle>
         </DialogHeader>
 
         {isLoading && <Skeleton className="h-24 w-full" />}

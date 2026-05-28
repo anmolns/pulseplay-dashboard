@@ -97,7 +97,7 @@ export function NewProjectModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-border bg-card shadow-elevated">
         <DialogHeader>
-          <DialogTitle className="text-[hsl(276,45%,28%)]">New Project</DialogTitle>
+          <DialogTitle className="text-foreground">New Project</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">

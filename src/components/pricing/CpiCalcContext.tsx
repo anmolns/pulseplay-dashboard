@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
 export type CpiCalcInputs = {
   country_code?: string
@@ -19,14 +19,16 @@ const CpiCalcContext = createContext<CpiCalcContextValue | null>(null)
 
 export function CpiCalcProvider({ children }: { children: React.ReactNode }) {
   const [inputs, setInputsState] = useState<CpiCalcInputs>({})
+  const setInputs = useCallback((next: CpiCalcInputs) => setInputsState(next), [])
+  const clear = useCallback(() => setInputsState({}), [])
 
   const value = useMemo<CpiCalcContextValue>(
     () => ({
       inputs,
-      setInputs: (next) => setInputsState(next),
-      clear: () => setInputsState({}),
+      setInputs,
+      clear,
     }),
-    [inputs]
+    [inputs, setInputs, clear]
   )
 
   return <CpiCalcContext.Provider value={value}>{children}</CpiCalcContext.Provider>

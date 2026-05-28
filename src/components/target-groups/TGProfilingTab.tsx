@@ -73,7 +73,7 @@ export function TGProfilingTab({ projectId, tgId }: TGProfilingTabProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-5">
       <div className="space-y-3 lg:col-span-2">
-        <h3 className="text-sm font-semibold text-[hsl(276,45%,28%)]">Applied Profiles</h3>
+        <h3 className="text-sm font-semibold text-foreground">Applied Profiles</h3>
         {isLoading &&
           Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-24 w-full" />

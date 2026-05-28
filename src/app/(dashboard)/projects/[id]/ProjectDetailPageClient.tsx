@@ -16,6 +16,7 @@ import { projectStatusClass } from '@/lib/status-styles'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useBreadcrumbs } from '@/components/layout/BreadcrumbsContext'
 
 const NewTGModal = dynamic(
   () => import('@/components/target-groups/NewTGModal').then((m) => m.NewTGModal),
@@ -24,6 +25,7 @@ const NewTGModal = dynamic(
 
 export default function ProjectDetailPageClient({ id }: { id: string }) {
   const [modalOpen, setModalOpen] = useState(false)
+  const { set, clear } = useBreadcrumbs()
 
   const { data: project, isLoading: projectLoading } = useQuery({
     queryKey: queryKeys.project(id),
@@ -50,6 +52,14 @@ export default function ProjectDetailPageClient({ id }: { id: string }) {
       setStoredBusinessUnitId(project.business_unit_id)
     }
   }, [project])
+
+  useEffect(() => {
+    set([
+      { label: 'Projects', href: '/projects' },
+      { label: project?.name ?? '...' },
+    ])
+    return () => clear()
+  }, [set, clear, project?.name])
 
   return (
     <DashboardShell>

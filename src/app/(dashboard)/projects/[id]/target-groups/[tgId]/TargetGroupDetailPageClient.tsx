@@ -19,6 +19,7 @@ import { TGProfilingTab } from '@/components/target-groups/TGProfilingTab'
 import { TGSessionsTab } from '@/components/target-groups/TGSessionsTab'
 import { TGChangelogTab } from '@/components/target-groups/TGChangelogTab'
 import { useCpiCalc } from '@/components/pricing/CpiCalcContext'
+import { useBreadcrumbs } from '@/components/layout/BreadcrumbsContext'
 
 export default function TargetGroupDetailPageClient({
   projectId,
@@ -30,6 +31,7 @@ export default function TargetGroupDetailPageClient({
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { setInputs } = useCpiCalc()
+  const { set, clear } = useBreadcrumbs()
 
   const { data: project } = useQuery({
     queryKey: queryKeys.project(projectId),
@@ -58,6 +60,15 @@ export default function TargetGroupDetailPageClient({
       completes_goal: tg.completes_goal ?? undefined,
     })
   }, [tg, setInputs])
+
+  useEffect(() => {
+    set([
+      { label: 'Projects', href: '/projects' },
+      { label: project?.name ?? '...', href: `/projects/${projectId}` },
+      { label: tg?.name ?? '...' },
+    ])
+    return () => clear()
+  }, [set, clear, projectId, project?.name, tg?.name])
 
   const statusMutation = useMutation({
     mutationFn: async (status: TGStatus) => {

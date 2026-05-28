@@ -2,15 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import Image from 'next/image'
 import {
   FolderKanban,
   FileBarChart,
   HelpCircle,
   LogOut,
-  Layers,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { OrgUser } from '@/types'
+import logo from '@/assets/logo.png'
 
 const navItems = [
   { href: '/projects', label: 'Projects', icon: FolderKanban },
@@ -35,13 +36,15 @@ export function Sidebar({ user }: SidebarProps) {
 
   return (
     <aside className="flex h-screen w-[240px] shrink-0 flex-col border-r border-border bg-sidebar">
-      <div className="flex items-center gap-2.5 px-6 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[hsl(290,60%,50%)] shadow-sm">
-          <Layers className="h-4 w-4 text-white" />
-        </div>
-        <span className="text-lg font-semibold tracking-tight text-[hsl(276,45%,28%)]">
-          PulsePlay
-        </span>
+      <div className="flex items-center justify-start pl-1 pr-3 py-3">
+        <Link href="/projects" className="block w-[220px] max-w-full">
+          <Image
+            src={logo}
+            alt="PulsePlay"
+            className="h-auto w-full object-contain object-left"
+            priority
+          />
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-0.5 px-3">

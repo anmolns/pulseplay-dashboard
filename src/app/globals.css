@@ -5,27 +5,28 @@
 @layer base {
   :root {
     --background: 220 20% 98%;
-    --foreground: 260 30% 18%;
+    --foreground: 222 30% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 260 30% 18%;
+    --card-foreground: 222 30% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 260 30% 18%;
-    --primary: 276 65% 42%;
+    --popover-foreground: 222 30% 14%;
+    /* Dark bluish brand */
+    --primary: 221 83% 45%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 16% 96%;
-    --secondary-foreground: 260 20% 30%;
+    --secondary-foreground: 222 20% 30%;
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
-    --accent: 276 55% 96%;
-    --accent-foreground: 276 65% 35%;
+    --accent: 221 70% 96%;
+    --accent-foreground: 221 83% 35%;
     --destructive: 0 84% 60%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 276 65% 42%;
+    --ring: 221 83% 45%;
     --radius: 0.5rem;
     --sidebar: 0 0% 100%;
-    --brand: 276 65% 42%;
-    --brand-light: 276 55% 96%;
+    --brand: 221 83% 45%;
+    --brand-light: 221 70% 96%;
   }
 
   * {
@@ -43,7 +44,7 @@
   }
 
   .pp-section-title {
-    @apply text-xl font-semibold tracking-tight text-[hsl(276,45%,28%)];
+    @apply text-xl font-semibold tracking-tight text-foreground;
   }
 
   .pp-label {
@@ -51,7 +52,8 @@
   }
 
   .pp-data-row {
-    @apply flex cursor-pointer items-center gap-4 border-b border-border/80 px-2 py-5 transition-colors;
+    /* Intentionally no layout (flex/grid) here; row components define it. */
+    @apply cursor-pointer border-b border-border/80 py-5 transition-colors;
   }
 
   .pp-data-row:hover {
