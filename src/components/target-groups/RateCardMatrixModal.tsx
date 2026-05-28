@@ -166,8 +166,14 @@ export function RateCardMatrixModal({
       )
     },
     onSuccess: (_, amount) => {
+      // Optimistic cache update so the UI changes immediately, even if refetch is slow.
+      queryClient.setQueryData(queryKeys.targetGroup(projectId, tgId), (prev: unknown) => {
+        if (!prev || typeof prev !== 'object') return prev
+        return { ...(prev as Record<string, unknown>), base_cpi: amount }
+      })
       queryClient.invalidateQueries({ queryKey: queryKeys.targetGroup(projectId, tgId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.targetGroups(projectId) })
+      queryClient.refetchQueries({ queryKey: queryKeys.targetGroup(projectId, tgId) })
       toast({ title: `CPI updated to kr ${Number(amount).toFixed(2)}` })
       onOpenChange(false)
       setSelected(null)
@@ -191,10 +197,14 @@ export function RateCardMatrixModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton
-        className="h-[calc(100vh-2rem)] max-h-[900px] w-[calc(100vw-2rem)] max-w-[900px] overflow-hidden p-0 sm:max-w-[900px]"
+        overlayClassName="bg-black/50 supports-backdrop-filter:backdrop-blur-sm"
+        className="w-[calc(100vw-2rem)] max-w-[980px] overflow-hidden rounded-2xl p-0 sm:max-w-[980px]"
       >
-        <div className="flex h-full flex-col bg-white">
+        <div className="flex max-h-[calc(100vh-6rem)] flex-col bg-white">
           <div className="border-b border-gray-200 px-6 py-5">
+            <div className="mb-4 pr-10 text-lg font-semibold tracking-tight text-gray-900">
+              {tg.name || 'Rate card'}
+            </div>
             <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-start">
               <div className="space-y-1 text-sm">
                 <div className="flex items-baseline justify-between gap-2">
@@ -257,7 +267,7 @@ export function RateCardMatrixModal({
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-auto px-6 py-5">
+          <div className="max-h-[60vh] overflow-auto px-5 py-4">
             {isLoading && <div className="text-sm text-gray-500">Loading rate card…</div>}
             {isError && (
               <div className="text-sm text-red-600">Failed to load rate card.</div>
@@ -270,7 +280,7 @@ export function RateCardMatrixModal({
 
             {!isLoading && !isError && entries.length > 0 && (
               <div className="overflow-x-auto">
-                <table className="min-w-[760px] border-separate border-spacing-0">
+                <table className="w-full min-w-[760px] border-separate border-spacing-0">
                   <thead>
                     <tr>
                       <th className="sticky left-0 z-10 border border-gray-200 bg-white px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">

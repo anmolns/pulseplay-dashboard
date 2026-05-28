@@ -160,11 +160,6 @@ export default function TargetGroupDetailPageClient({
         ) : (
           <>
             <PageHeader
-              breadcrumbs={[
-                { label: 'Projects', href: '/projects' },
-                { label: project?.name ?? '...', href: `/projects/${projectId}` },
-                { label: tg?.name ?? '...' },
-              ]}
               title={tg?.name ?? ''}
               subtitle={tg?.short_code}
               badge={

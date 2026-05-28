@@ -17,7 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { FillRateChart } from './FillRateChart'
-import { CpiLookupModal } from './CpiLookupModal'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { RateCardMatrixModal } from './RateCardMatrixModal'
 
@@ -59,21 +58,18 @@ export function TGOverviewTab({
   const queryClient = useQueryClient()
   const [editingField, setEditingField] = useState<SettingField | null>(null)
   const [editValue, setEditValue] = useState('')
-  const [cpiOpen, setCpiOpen] = useState(false)
   const [rateCardOpen, setRateCardOpen] = useState(false)
 
-  // Allow header pricing dropdown to open this modal via `?cpi=1`.
+  // Allow header pricing dropdown to open this modal via `?rateCard=1`.
   // We must do this in an effect (not during render), and we should clear the
   // param on close, otherwise the modal will reopen immediately.
   useEffect(() => {
-    if (searchParams?.get('cpi') === '1') setCpiOpen(true)
+    if (searchParams?.get('rateCard') === '1') setRateCardOpen(true)
   }, [searchParams])
 
-  const handleCpiOpenChange = (next: boolean) => {
-    setCpiOpen(next)
-    if (!next && typeof pathname === 'string') {
-      router.replace(pathname)
-    }
+  const handleRateCardOpenChange = (next: boolean) => {
+    setRateCardOpen(next)
+    if (!next && typeof pathname === 'string') router.replace(pathname)
   }
 
   const { data: fillRate, isLoading: fillLoading, isError: fillError } = useQuery({
@@ -279,38 +275,20 @@ export function TGOverviewTab({
                 <span className="font-medium">{formatCpi(tg.max_cpi)}</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="w-full border-primary/30 text-primary hover:bg-brand-light"
-                onClick={() => setCpiOpen(true)}
-              >
-                Lookup CPI
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full border-border bg-white text-foreground hover:bg-secondary/60"
-                onClick={() => setRateCardOpen(true)}
-              >
-                View Rate Card
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              className="w-full border-border bg-white text-foreground hover:bg-secondary/60"
+              onClick={() => setRateCardOpen(true)}
+            >
+              View Rate Card
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      <CpiLookupModal
-        projectId={projectId}
-        tgId={tgId}
-        tg={tg}
-        businessUnitId={businessUnitId}
-        open={cpiOpen}
-        onOpenChange={handleCpiOpenChange}
-      />
-
       <RateCardMatrixModal
         open={rateCardOpen}
-        onOpenChange={setRateCardOpen}
+        onOpenChange={handleRateCardOpenChange}
         projectId={projectId}
         tgId={tgId}
         tg={tg}

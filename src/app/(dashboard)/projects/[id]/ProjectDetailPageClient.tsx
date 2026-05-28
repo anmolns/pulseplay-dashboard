@@ -68,10 +68,6 @@ export default function ProjectDetailPageClient({ id }: { id: string }) {
           <Skeleton className="mb-8 h-12 w-64" />
         ) : (
           <PageHeader
-            breadcrumbs={[
-              { label: 'Projects', href: '/projects' },
-              { label: project?.name ?? '...' },
-            ]}
             title={project?.name ?? ''}
             subtitle={project?.short_code}
             badge={

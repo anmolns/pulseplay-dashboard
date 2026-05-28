@@ -5,11 +5,12 @@ import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
 import { AlertCircle, ChevronDown, Loader2 } from 'lucide-react'
 import api from '@/lib/api'
-import type { CpiLookupResult } from '@/types'
+import type { CpiLookupResult, TargetGroup } from '@/types'
 import { getStoredBusinessUnitId } from '@/hooks/useAuth'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { formatCpi } from '@/lib/utils'
 import { useCpiCalc } from './CpiCalcContext'
+import { queryKeys } from '@/lib/query-keys'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,13 @@ export function CpiCalculatorWidget() {
   const pathname = usePathname()
   const { inputs } = useCpiCalc()
   const debounced = useDebouncedValue(inputs, 400)
+
+  const tgRoute = useMemo(() => {
+    if (typeof pathname !== 'string') return null
+    const m = pathname.match(/^\/projects\/([^/]+)\/target-groups\/([^/]+)/)
+    if (!m) return null
+    return { projectId: m[1], tgId: m[2] }
+  }, [pathname])
 
   const { canFetch, blockedReason } = useMemo(() => {
     const buId = getStoredBusinessUnitId()
@@ -81,20 +89,30 @@ export function CpiCalculatorWidget() {
     staleTime: 0,
   })
 
-  const amount = canFetch && data?.cpi_amount ? formatCpi(data.cpi_amount) : '—'
+  const { data: tgData } = useQuery({
+    queryKey: tgRoute ? queryKeys.targetGroup(tgRoute.projectId, tgRoute.tgId) : ['tg-none'],
+    queryFn: async () => {
+      if (!tgRoute) return null
+      const { data } = await api.get<TargetGroup>(
+        `/projects/${tgRoute.projectId}/target-groups/${tgRoute.tgId}`
+      )
+      return data
+    },
+    enabled: !!tgRoute,
+    staleTime: 30_000,
+  })
+
+  const appliedBaseCpi = tgData?.base_cpi ? formatCpi(tgData.base_cpi) : null
+  const estimateCpi = canFetch && data?.cpi_amount ? formatCpi(data.cpi_amount) : '—'
+  const amount = appliedBaseCpi ?? estimateCpi
   const bracket =
     canFetch && data?.loi_bracket && data?.ir_bracket
       ? `${data.loi_bracket} · ${data.ir_bracket}`
       : ''
 
-  const cost =
-    canFetch && data?.cpi_amount
-      ? formatCostKr(data.cpi_amount, debounced.completes_goal)
-      : '—'
+  const cost = amount !== '—' ? formatCostKr(String(amount).replace(/[^\d.]/g, ''), debounced.completes_goal) : '—'
 
-  const isTargetGroupRoute =
-    typeof pathname === 'string' &&
-    /^\/projects\/[^/]+\/target-groups\/[^/]+/.test(pathname)
+  const isTargetGroupRoute = !!tgRoute
 
   return (
     <div className="flex items-center gap-6">
@@ -159,7 +177,7 @@ export function CpiCalculatorWidget() {
                 disabled={!isTargetGroupRoute}
                 onClick={() => {
                   if (!isTargetGroupRoute) return
-                  router.push(`${pathname}?cpi=1`)
+                  router.push(`${pathname}?rateCard=1`)
                 }}
               >
                 View rate card

@@ -15,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -124,60 +123,67 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="fixed right-0 top-0 h-screen w-full max-w-xl overflow-y-auto rounded-none border-l border-border bg-card shadow-elevated">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">New Target Group</DialogTitle>
-        </DialogHeader>
-        <form
-          onSubmit={handleSubmit((v) => mutation.mutate(v))}
-          className="space-y-3"
-        >
-          <div className="space-y-2">
-            <Label className="pp-label">Name *</Label>
-            <Input className="h-11 border-border bg-white shadow-sm" {...register('name')} />
-            {errors.name && (
-              <p className="text-xs text-red-500">{errors.name.message}</p>
-            )}
-          </div>
+      <DialogContent
+        showCloseButton
+        overlayClassName="bg-black/50 supports-backdrop-filter:backdrop-blur-sm"
+        className="w-[calc(100vw-2rem)] max-w-[820px] overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-elevated"
+      >
+        <div className="flex max-h-[calc(100vh-6rem)] flex-col">
+          <DialogHeader className="border-b border-border px-6 py-5">
+            <DialogTitle className="text-foreground">New Target Group</DialogTitle>
+          </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label className="pp-label">Country</Label>
-              <Select
-                value={watch('country_code')}
-                onValueChange={(v) => v && setValue('country_code', v)}
-              >
-                <SelectTrigger className="h-11 border-border bg-white shadow-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {['SE', 'NO', 'DK', 'FI', 'DE', 'GB', 'US'].map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="pp-label">Language</Label>
-              <Select
-                value={watch('language_code')}
-                onValueChange={(v) => v && setValue('language_code', v)}
-              >
-                <SelectTrigger className="h-11 border-border bg-white shadow-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {['sv', 'no', 'da', 'fi', 'de', 'en'].map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <form
+            onSubmit={handleSubmit((v) => mutation.mutate(v))}
+            className="min-h-0 flex-1 overflow-y-auto px-6 py-5"
+          >
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label className="pp-label">Name *</Label>
+                <Input className="h-11 border-border bg-white shadow-sm" {...register('name')} />
+                {errors.name && (
+                  <p className="text-xs text-red-500">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="pp-label">Country</Label>
+                  <Select
+                    value={watch('country_code')}
+                    onValueChange={(v) => v && setValue('country_code', v)}
+                  >
+                    <SelectTrigger className="h-11 border-border bg-white shadow-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['SE', 'NO', 'DK', 'FI', 'DE', 'GB', 'US'].map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="pp-label">Language</Label>
+                  <Select
+                    value={watch('language_code')}
+                    onValueChange={(v) => v && setValue('language_code', v)}
+                  >
+                    <SelectTrigger className="h-11 border-border bg-white shadow-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {['sv', 'no', 'da', 'fi', 'de', 'en'].map((l) => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
           <div className="space-y-2">
             <Label className="pp-label">Study Type</Label>
@@ -251,15 +257,24 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
             <Input className="h-11 border-border bg-white shadow-sm" {...register('live_survey_url')} />
           </div>
 
-          <DialogFooter>
+              <div className="h-2" />
+            </div>
+          </form>
+
+          <div className="flex items-center justify-end gap-2 border-t border-border bg-muted/40 px-6 py-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary/90" disabled={mutation.isPending}>
+            <Button
+              type="button"
+              className="bg-primary hover:bg-primary/90"
+              disabled={mutation.isPending}
+              onClick={handleSubmit((v) => mutation.mutate(v))}
+            >
               {mutation.isPending ? 'Creating...' : 'Create'}
             </Button>
-          </DialogFooter>
-        </form>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
