@@ -1,0 +1,55 @@
+'use client'
+
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import dynamic from 'next/dynamic'
+import api from '@/lib/api'
+import { queryKeys } from '@/lib/query-keys'
+import type { Report } from '@/types'
+import { DashboardShell } from '@/components/layout/DashboardShell'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { ReportTable } from '@/components/reports/ReportTable'
+import { Button } from '@/components/ui/button'
+
+const NewReportModal = dynamic(
+  () => import('@/components/reports/NewReportModal').then((m) => m.NewReportModal),
+  { ssr: false }
+)
+
+export default function ReportsPageClient() {
+  const [modalOpen, setModalOpen] = useState(false)
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: queryKeys.reports,
+    queryFn: async () => {
+      const { data } = await api.get<Report[]>('/reports')
+      return data
+    },
+  })
+
+  return (
+    <DashboardShell>
+      <div className="pp-page">
+        <PageHeader
+          breadcrumbs={[{ label: 'Reports' }]}
+          title="Reports"
+          subtitle="Request and download performance reports"
+          actions={
+            <Button
+              onClick={() => setModalOpen(true)}
+              className="h-10 bg-primary shadow-sm hover:bg-primary/90"
+            >
+              Request report
+            </Button>
+          }
+        />
+
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+          <ReportTable reports={data} isLoading={isLoading} isError={isError} />
+        </div>
+
+        <NewReportModal open={modalOpen} onOpenChange={setModalOpen} />
+      </div>
+    </DashboardShell>
+  )
+}

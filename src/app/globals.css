@@ -2,26 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 220 20% 98%;
+    --foreground: 260 30% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 260 30% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 260 30% 18%;
+    --primary: 276 65% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 16% 96%;
+    --secondary-foreground: 260 20% 30%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 276 55% 96%;
+    --accent-foreground: 276 65% 35%;
+    --destructive: 0 84% 60%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 276 65% 42%;
+    --radius: 0.5rem;
+    --sidebar: 0 0% 100%;
+    --brand: 276 65% 42%;
+    --brand-light: 276 55% 96%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
+@layer components {
+  .pp-page {
+    @apply mx-auto max-w-[1400px] px-8 py-8;
+  }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .pp-section-title {
+    @apply text-xl font-semibold tracking-tight text-[hsl(276,45%,28%)];
+  }
+
+  .pp-label {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+
+  .pp-data-row {
+    @apply flex cursor-pointer items-center gap-4 border-b border-border/80 px-2 py-5 transition-colors;
+  }
+
+  .pp-data-row:hover {
+    background-color: hsl(var(--brand-light) / 0.4);
   }
 }
