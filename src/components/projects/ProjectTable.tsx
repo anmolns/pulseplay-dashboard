@@ -63,10 +63,10 @@ export function ProjectTable({ projects, isLoading, isError }: ProjectTableProps
             placeholder="Search name, ID, or customer reference number"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 border-border bg-white pr-10 shadow-sm"
+            className="h-10 border-border bg-card pr-10 shadow-sm"
           />
         </div>
-        <Button variant="outline" className="h-10 gap-2 bg-white shadow-sm">
+        <Button variant="outline" className="h-10 gap-2 bg-card shadow-sm">
           <SlidersHorizontal className="h-4 w-4" />
           Filter
         </Button>

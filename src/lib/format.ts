@@ -95,3 +95,15 @@ export function formatLanguage(code?: string | null): string {
   if (!code) return '—'
   return LANGUAGE_LABELS[code] || code.toUpperCase()
 }
+
+/** First 8 chars of a UUID for compact tables */
+export function formatShortId(id?: string | null, visible = 8): string {
+  if (!id) return '—'
+  if (id.length <= visible) return id
+  return `${id.slice(0, visible)}…`
+}
+
+export function formatLabel(value?: string | null): string {
+  if (!value) return '—'
+  return value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}

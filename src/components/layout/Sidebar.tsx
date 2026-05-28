@@ -57,12 +57,15 @@ export function Sidebar({ user }: SidebarProps) {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
                 active
-                  ? 'bg-brand-light text-primary'
+                  ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
               )}
             >
               <Icon
-                className={cn('h-[18px] w-[18px]', active && 'text-primary')}
+                className={cn(
+                  'h-[18px] w-[18px]',
+                  active ? 'text-primary-foreground' : undefined
+                )}
               />
               {label}
             </Link>
@@ -80,7 +83,7 @@ export function Sidebar({ user }: SidebarProps) {
         </button>
 
         <div className="flex items-center gap-3 rounded-lg bg-secondary/60 px-3 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-xs font-bold text-white shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary ring-1 ring-primary/30">
             {initials}
           </div>
           <div className="min-w-0 flex-1">
@@ -94,7 +97,7 @@ export function Sidebar({ user }: SidebarProps) {
           <button
             type="button"
             onClick={handleLogout}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white hover:text-foreground"
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             title="Logout"
           >
             <LogOut className="h-4 w-4" />

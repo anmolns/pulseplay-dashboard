@@ -1,13 +1,13 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
+import { useDebouncedCallback } from 'use-debounce'
 import { AlertCircle, ChevronDown, Loader2 } from 'lucide-react'
 import api from '@/lib/api'
 import type { CpiLookupResult, TargetGroup } from '@/types'
 import { getStoredBusinessUnitId } from '@/hooks/useAuth'
-import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { formatCpi } from '@/lib/utils'
 import { useCpiCalc } from './CpiCalcContext'
 import { queryKeys } from '@/lib/query-keys'
@@ -33,11 +33,78 @@ function formatCostKr(cpiAmount?: string | null, goal?: number) {
   )
 }
 
+function isValidCpiInputs(country?: string, loi?: number, ir?: number): boolean {
+  if (!country) return false
+  const loiNum = Number(loi)
+  const irNum = Number(ir)
+  if (!loi || !ir || !Number.isFinite(loiNum) || loiNum <= 0) return false
+  if (!Number.isFinite(irNum) || irNum <= 0 || irNum > 100) return false
+  return true
+}
+
 export function CpiCalculatorWidget() {
   const router = useRouter()
   const pathname = usePathname()
   const { inputs } = useCpiCalc()
-  const debounced = useDebouncedValue(inputs, 400)
+  const [cpiResult, setCpiResult] = useState<CpiLookupResult | null>(null)
+  const [isFetching, setIsFetching] = useState(false)
+  const [isError, setIsError] = useState(false)
+
+  const loi = inputs.loi_minutes
+  const ir = inputs.ir_pct
+  const country = inputs.country_code
+  const canLookup = isValidCpiInputs(country, loi, ir)
+
+  const lookupCpi = useDebouncedCallback(
+    async (lookupCountry: string, lookupLoi: number, lookupIr: number) => {
+      if (
+        !lookupCountry ||
+        !lookupLoi ||
+        !lookupIr ||
+        lookupLoi <= 0 ||
+        lookupIr <= 0
+      ) {
+        setCpiResult(null)
+        return
+      }
+
+      const buId = getStoredBusinessUnitId()
+      if (!buId) return
+
+      setIsFetching(true)
+      setIsError(false)
+      try {
+        const { data } = await api.post<CpiLookupResult>(
+          `/pricing/cpi-lookup?business_unit_id=${buId}`,
+          {
+            country_code: lookupCountry,
+            loi_minutes: lookupLoi,
+            ir_pct: lookupIr,
+          }
+        )
+        setCpiResult(data)
+      } catch {
+        setCpiResult(null)
+        setIsError(true)
+      } finally {
+        setIsFetching(false)
+      }
+    },
+    500
+  )
+
+  useEffect(() => {
+    if (!canLookup || loi == null || ir == null || !country) {
+      lookupCpi.cancel()
+      setCpiResult(null)
+      setIsFetching(false)
+      setIsError(false)
+      return
+    }
+
+    lookupCpi(country, loi, ir)
+    return () => lookupCpi.cancel()
+  }, [canLookup, country, loi, ir, lookupCpi])
 
   const tgRoute = useMemo(() => {
     if (typeof pathname !== 'string') return null
@@ -46,48 +113,18 @@ export function CpiCalculatorWidget() {
     return { projectId: m[1], tgId: m[2] }
   }, [pathname])
 
-  const { canFetch, blockedReason } = useMemo(() => {
+  const blockedReason = useMemo(() => {
     const buId = getStoredBusinessUnitId()
-    if (!buId) return { canFetch: false, blockedReason: 'Missing business unit' }
-    if (!debounced.country_code) return { canFetch: false, blockedReason: 'Set Country' }
-    if (debounced.loi_minutes == null) return { canFetch: false, blockedReason: 'Set LOI' }
-    if (debounced.ir_pct == null) return { canFetch: false, blockedReason: 'Set IR %' }
-    const loi = Number(debounced.loi_minutes)
-    const ir = Number(debounced.ir_pct)
-    if (!Number.isFinite(loi) || loi <= 0) return { canFetch: false, blockedReason: 'Set LOI' }
-    if (!Number.isFinite(ir) || ir <= 0 || ir > 100)
-      return { canFetch: false, blockedReason: 'Set IR %' }
-    return { canFetch: true, blockedReason: null }
-  }, [debounced])
-
-  const buId = typeof window !== 'undefined' ? getStoredBusinessUnitId() : null
-
-  const { data, isFetching, isError } = useQuery({
-    queryKey: [
-      'cpi-lookup-widget',
-      {
-        buId,
-        country: debounced.country_code,
-        loi: debounced.loi_minutes,
-        ir: debounced.ir_pct,
-      },
-    ] as const,
-    queryFn: async () => {
-      if (!buId) return null
-      const { data } = await api.post<CpiLookupResult>(
-        `/pricing/cpi-lookup?business_unit_id=${buId}`,
-        {
-          country_code: debounced.country_code,
-          loi_minutes: Number(debounced.loi_minutes),
-          ir_pct: Number(debounced.ir_pct),
-        }
-      )
-      return data
-    },
-    enabled: canFetch,
-    retry: 1,
-    staleTime: 0,
-  })
+    if (!buId) return 'Missing business unit'
+    if (!country) return 'Set Country'
+    if (loi == null) return 'Set LOI'
+    if (ir == null) return 'Set IR %'
+    const loiNum = Number(loi)
+    const irNum = Number(ir)
+    if (!Number.isFinite(loiNum) || loiNum <= 0) return 'Set LOI'
+    if (!Number.isFinite(irNum) || irNum <= 0 || irNum > 100) return 'Set IR %'
+    return null
+  }, [country, loi, ir])
 
   const { data: tgData } = useQuery({
     queryKey: tgRoute ? queryKeys.targetGroup(tgRoute.projectId, tgRoute.tgId) : ['tg-none'],
@@ -103,14 +140,18 @@ export function CpiCalculatorWidget() {
   })
 
   const appliedBaseCpi = tgData?.base_cpi ? formatCpi(tgData.base_cpi) : null
-  const estimateCpi = canFetch && data?.cpi_amount ? formatCpi(data.cpi_amount) : '—'
+  const estimateCpi =
+    canLookup && cpiResult?.cpi_amount ? formatCpi(cpiResult.cpi_amount) : '—'
   const amount = appliedBaseCpi ?? estimateCpi
   const bracket =
-    canFetch && data?.loi_bracket && data?.ir_bracket
-      ? `${data.loi_bracket} · ${data.ir_bracket}`
+    canLookup && cpiResult?.loi_bracket && cpiResult?.ir_bracket
+      ? `${cpiResult.loi_bracket} · ${cpiResult.ir_bracket}`
       : ''
 
-  const cost = amount !== '—' ? formatCostKr(String(amount).replace(/[^\d.]/g, ''), debounced.completes_goal) : '—'
+  const cost =
+    amount !== '—'
+      ? formatCostKr(String(amount).replace(/[^\d.]/g, ''), inputs.completes_goal)
+      : '—'
 
   const isTargetGroupRoute = !!tgRoute
 
@@ -120,7 +161,7 @@ export function CpiCalculatorWidget() {
         <DropdownMenuTrigger className="flex items-center gap-6 rounded-md px-2 py-1 hover:bg-secondary/60">
           <div className="flex items-center gap-2">
             <span className="pp-label">CPI</span>
-            <span className="text-sm font-semibold text-indigo-400">{amount}</span>
+            <span className="text-sm font-semibold text-primary">{amount}</span>
             <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
             {isFetching && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -202,4 +243,3 @@ export function CpiCalculatorWidget() {
     </div>
   )
 }
-

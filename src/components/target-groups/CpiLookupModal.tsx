@@ -123,8 +123,8 @@ export function CpiLookupModal({
           </Button>
 
           {result && (
-            <div className="rounded-md bg-slate-50 p-4 text-sm">
-              <p className="font-semibold text-slate-900">
+            <div className="rounded-md border border-border bg-secondary p-4 text-sm">
+              <p className="font-semibold text-foreground">
                 {formatCpi(result.cpi_amount)} — {result.loi_bracket}, {result.ir_bracket}
               </p>
             </div>

@@ -106,7 +106,7 @@ export function NewProjectModal({
             </Label>
             <Input
               id="name"
-              className="h-11 border-border bg-white shadow-sm"
+              className="h-11 border-border bg-card shadow-sm"
               {...register('name')}
             />
             {errors.name && (
@@ -119,7 +119,7 @@ export function NewProjectModal({
             </Label>
             <Input
               id="customer_ref_number"
-              className="h-11 border-border bg-white shadow-sm"
+              className="h-11 border-border bg-card shadow-sm"
               {...register('customer_ref_number')}
             />
           </div>

@@ -225,7 +225,7 @@ export function TGOverviewTab({
                   <Input
                     autoFocus
                     type={row.type ?? 'text'}
-                    className="h-9 max-w-[220px] border-border bg-white text-sm shadow-sm"
+                    className="h-9 max-w-[220px] border-border bg-card text-sm shadow-sm"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onBlur={() => {
@@ -263,21 +263,21 @@ export function TGOverviewTab({
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-500">Base CPI</span>
+                <span className="text-muted-foreground">Base CPI</span>
                 <span className="font-medium">{formatCpi(tg.base_cpi)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Boost CPI</span>
+                <span className="text-muted-foreground">Boost CPI</span>
                 <span className="font-medium">{formatCpi(tg.boost_cpi)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Max CPI</span>
+                <span className="text-muted-foreground">Max CPI</span>
                 <span className="font-medium">{formatCpi(tg.max_cpi)}</span>
               </div>
             </div>
             <Button
               variant="outline"
-              className="w-full border-border bg-white text-foreground hover:bg-secondary/60"
+              className="w-full border-border bg-card text-foreground hover:bg-secondary/60"
               onClick={() => setRateCardOpen(true)}
             >
               View Rate Card

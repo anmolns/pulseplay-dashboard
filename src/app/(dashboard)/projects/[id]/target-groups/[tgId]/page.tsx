@@ -5,7 +5,7 @@ const TargetGroupDetailPageClient = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-screen items-center justify-center bg-slate-50 text-slate-500">
+      <div className="flex h-screen items-center justify-center bg-background text-muted-foreground">
         Loading...
       </div>
     ),

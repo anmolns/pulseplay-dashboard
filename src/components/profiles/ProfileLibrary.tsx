@@ -96,16 +96,16 @@ export function ProfileLibrary({
         <CardTitle className="text-base text-foreground">Profile Library</CardTitle>
         <div className="flex gap-2 pt-2">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
-              className="h-10 border-border bg-white pl-8 shadow-sm"
+              className="h-10 border-border bg-card pl-8 shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <Select value={category} onValueChange={(v) => setCategory(v ?? 'All')}>
-            <SelectTrigger className="h-10 w-[180px] border-border bg-white shadow-sm">
+            <SelectTrigger className="h-10 w-[180px] border-border bg-card shadow-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -129,7 +129,7 @@ export function ProfileLibrary({
         {data?.map((attr) => (
           <div
             key={attr.id}
-            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-white px-3 py-2.5 shadow-sm"
+            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5 shadow-sm"
           >
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">

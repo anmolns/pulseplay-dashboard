@@ -17,17 +17,17 @@ interface HeaderProps {
 
 export function Header({ breadcrumbs, user }: HeaderProps) {
   return (
-    <header className="flex h-14 items-center justify-between border-b border-slate-200 bg-white px-6">
-      <nav className="flex items-center gap-1 text-sm text-slate-600">
+    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-6">
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
         {breadcrumbs.map((item, i) => (
           <span key={i} className="flex items-center gap-1">
-            {i > 0 && <ChevronRight className="h-4 w-4 text-slate-400" />}
+            {i > 0 && <ChevronRight className="h-4 w-4 text-muted-foreground/70" />}
             {item.href ? (
-              <Link href={item.href} className="hover:text-slate-900">
+              <Link href={item.href} className="hover:text-foreground">
                 {item.label}
               </Link>
             ) : (
-              <span className="font-medium text-slate-900">{item.label}</span>
+              <span className="font-medium text-foreground">{item.label}</span>
             )}
           </span>
         ))}
@@ -35,7 +35,7 @@ export function Header({ breadcrumbs, user }: HeaderProps) {
 
       <div className="flex items-center gap-2">
         <Avatar className="h-8 w-8">
-          <AvatarFallback className="bg-indigo-100 text-xs font-semibold text-indigo-700">
+          <AvatarFallback className="bg-primary/20 text-xs font-semibold text-primary">
             {user?.display_code ?? '??'}
           </AvatarFallback>
         </Avatar>

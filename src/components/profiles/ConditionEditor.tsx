@@ -152,7 +152,7 @@ export function ConditionEditor({
               <Label className="pp-label">Min</Label>
               <Input
                 type="number"
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-card shadow-sm"
                 value={rangeMin}
                 onChange={(e) => setRangeMin(e.target.value)}
               />
@@ -161,7 +161,7 @@ export function ConditionEditor({
               <Label className="pp-label">Max</Label>
               <Input
                 type="number"
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-card shadow-sm"
                 value={rangeMax}
                 onChange={(e) => setRangeMax(e.target.value)}
               />
@@ -201,7 +201,7 @@ export function ConditionEditor({
                     type="checkbox"
                     checked={selectedOptions.has(opt.id)}
                     onChange={() => toggleOption(opt.id)}
-                    className="h-4 w-4 rounded border-slate-300 accent-[hsl(var(--brand))]"
+                    className="h-4 w-4 rounded border-border accent-primary"
                   />
                   <span className="text-sm">{getOptionLabel(opt)}</span>
                 </label>

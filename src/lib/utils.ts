@@ -17,4 +17,6 @@ export {
   formatReportType,
   formatDateRange,
   formatLanguage,
+  formatShortId,
+  formatLabel,
 } from './format'

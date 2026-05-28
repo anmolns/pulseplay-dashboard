@@ -21,7 +21,7 @@ export function ProgressMetric({
       {label && (
         <p className="pp-label mb-2 text-[10px]">{label}</p>
       )}
-      <div className="mb-1.5 h-1 overflow-hidden rounded-full bg-slate-100">
+      <div className="mb-1.5 h-1 overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full bg-primary transition-all duration-500"
           style={{ width: `${pct}%` }}

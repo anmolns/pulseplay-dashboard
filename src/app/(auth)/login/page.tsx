@@ -119,7 +119,7 @@ export default function LoginPage() {
 
       <div className="flex flex-1 items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-[400px]">
-          <div className="rounded-2xl border border-border bg-white p-7 shadow-card">
+          <div className="rounded-2xl border border-border bg-card p-7 shadow-card">
             <div className="mb-6 flex justify-center">
               <Image
                 src={logo}
@@ -142,7 +142,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-secondary shadow-sm"
                 {...register('email')}
               />
               {errors.email && (
@@ -156,7 +156,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-secondary shadow-sm"
                 {...register('password')}
               />
               {errors.password && (
@@ -164,7 +164,7 @@ export default function LoginPage() {
               )}
             </div>
             {error && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
                 {error}
               </p>
             )}

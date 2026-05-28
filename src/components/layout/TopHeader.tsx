@@ -12,7 +12,7 @@ export function TopHeader() {
   const { items } = useBreadcrumbs()
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-white/80 backdrop-blur">
+    <header className="sticky top-0 z-10 border-b border-border bg-card/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between gap-5 px-8">
         <div className="min-w-0">
           {items.length > 0 ? (

@@ -197,8 +197,8 @@ export function RateCardMatrixInline({
   if (!open) return null
 
   return (
-    <div className="mt-4 overflow-hidden rounded-xl border border-border bg-white shadow-card">
-      <div className="flex items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+    <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card shadow-card">
+      <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
         <div>
           <div className="text-sm font-semibold text-foreground">Rate card</div>
           <div className="mt-1 text-xs text-muted-foreground">
@@ -216,74 +216,74 @@ export function RateCardMatrixInline({
         </button>
       </div>
 
-      <div className="border-b border-gray-200 px-5 py-4">
+      <div className="border-b border-border px-5 py-4">
         <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-start">
           <div className="space-y-1 text-sm">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Country</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-muted-foreground">Country</span>
+              <span className="font-semibold text-foreground">
                 {formatCountryName(tg.country_code)}
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Language</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-muted-foreground">Language</span>
+              <span className="font-semibold text-foreground">
                 {formatLanguage(tg.language_code)}
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Currency</span>
-              <span className="font-semibold text-gray-900">{data?.currency ?? '—'}</span>
+              <span className="text-muted-foreground">Currency</span>
+              <span className="font-semibold text-foreground">{data?.currency ?? '—'}</span>
             </div>
           </div>
 
-          <div className="hidden h-full w-px bg-gray-200 md:block" />
+          <div className="hidden h-full w-px bg-border md:block" />
 
           <div className="space-y-1 text-sm">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Length of interview</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-muted-foreground">Length of interview</span>
+              <span className="font-semibold text-foreground">
                 {tg.expected_loi_minutes != null ? `${tg.expected_loi_minutes} min` : '—'}
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Incidence Rate</span>
-              <span className="font-semibold text-gray-900">
+              <span className="text-muted-foreground">Incidence Rate</span>
+              <span className="font-semibold text-foreground">
                 {tg.expected_ir_pct != null ? `${tg.expected_ir_pct} %` : '—'}
               </span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">CPI</span>
-              <span className="font-semibold text-indigo-600">
+              <span className="text-muted-foreground">CPI</span>
+              <span className="font-semibold text-primary">
                 {headerCpi != null ? `kr ${Number(headerCpi).toFixed(2)}` : '—'}
               </span>
             </div>
           </div>
 
-          <div className="hidden h-full w-px bg-gray-200 md:block" />
+          <div className="hidden h-full w-px bg-border md:block" />
 
           <div className="space-y-1 text-sm">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Boost CPI</span>
-              <span className="font-semibold text-gray-900">{formatCpi(tg.boost_cpi)}</span>
+              <span className="text-muted-foreground">Boost CPI</span>
+              <span className="font-semibold text-foreground">{formatCpi(tg.boost_cpi)}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Max CPI</span>
-              <span className="font-semibold text-gray-900">{formatCpi(tg.max_cpi)}</span>
+              <span className="text-muted-foreground">Max CPI</span>
+              <span className="font-semibold text-foreground">{formatCpi(tg.max_cpi)}</span>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Business unit</span>
-              <span className="font-semibold text-gray-900">{buId ?? '—'}</span>
+              <span className="text-muted-foreground">Business unit</span>
+              <span className="font-semibold text-foreground">{buId ?? '—'}</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-h-[520px] overflow-auto px-5 py-4">
-        {isLoading && <div className="text-sm text-gray-500">Loading rate card…</div>}
+        {isLoading && <div className="text-sm text-muted-foreground">Loading rate card…</div>}
         {isError && <div className="text-sm text-red-600">Failed to load rate card.</div>}
         {showEmpty && (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-muted-foreground">
             No rate card configured for {tg.country_code ?? 'this country'}
           </div>
         )}
@@ -293,13 +293,13 @@ export function RateCardMatrixInline({
             <table className="min-w-[760px] border-separate border-spacing-0">
               <thead>
                 <tr>
-                  <th className="sticky left-0 z-10 border border-gray-200 bg-white px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">
+                  <th className="sticky left-0 z-10 border border-border bg-card px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">
                     LOI / IR
                   </th>
                   {irBrackets.map((ir) => (
                     <th
                       key={bracketKey(ir)}
-                      className="border border-gray-200 bg-white px-3 py-2 text-right text-xs font-semibold text-gray-500"
+                      className="border border-border bg-card px-3 py-2 text-right text-xs font-semibold text-muted-foreground"
                     >
                       {ir.max}-{ir.min}%
                     </th>
@@ -309,7 +309,7 @@ export function RateCardMatrixInline({
               <tbody>
                 {loiBrackets.map((loi, i) => (
                   <tr key={bracketKey(loi)}>
-                    <td className="sticky left-0 z-10 border border-gray-200 bg-white px-3 py-2 text-left text-xs font-semibold uppercase text-gray-500">
+                    <td className="sticky left-0 z-10 border border-border bg-card px-3 py-2 text-left text-xs font-semibold uppercase text-muted-foreground">
                       {loi.min}-{loi.max} MIN
                     </td>
                     {irBrackets.map((ir, j) => {
@@ -328,9 +328,9 @@ export function RateCardMatrixInline({
                         <td
                           key={`${bracketKey(loi)}|${bracketKey(ir)}`}
                           className={cn(
-                            'border border-gray-200 px-3 py-2 text-right text-sm',
-                            isTintedColumn && 'bg-indigo-50 text-gray-900',
-                            isActive && 'bg-indigo-600 text-white font-semibold'
+                            'border border-border px-3 py-2 text-right text-sm',
+                            isTintedColumn && 'bg-primary/10 text-foreground',
+                            isActive && 'bg-primary text-primary-foreground font-semibold'
                           )}
                         >
                           {entry ? (
@@ -342,7 +342,7 @@ export function RateCardMatrixInline({
                               {Number(amount).toFixed(2)}
                             </button>
                           ) : (
-                            <span className="text-gray-400">—</span>
+                            <span className="text-muted-foreground/60">—</span>
                           )}
                         </td>
                       )
@@ -356,15 +356,15 @@ export function RateCardMatrixInline({
       </div>
 
       {selected && (
-        <div className="border-t border-gray-200 bg-white px-5 py-4">
+        <div className="border-t border-border bg-card px-5 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-muted-foreground">
               Apply{' '}
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-foreground">
                 kr {Number(selected.entry.cpi_amount).toFixed(2)}
               </span>{' '}
               {selectedBracketText ? (
-                <span className="text-gray-500">({selectedBracketText})</span>
+                <span className="text-muted-foreground">({selectedBracketText})</span>
               ) : null}{' '}
               to this target group?
             </div>

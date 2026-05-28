@@ -140,7 +140,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label className="pp-label">Name *</Label>
-                <Input className="h-11 border-border bg-white shadow-sm" {...register('name')} />
+                <Input className="h-11 border-border bg-card shadow-sm" {...register('name')} />
                 {errors.name && (
                   <p className="text-xs text-red-500">{errors.name.message}</p>
                 )}
@@ -153,7 +153,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
                     value={watch('country_code')}
                     onValueChange={(v) => v && setValue('country_code', v)}
                   >
-                    <SelectTrigger className="h-11 border-border bg-white shadow-sm">
+                    <SelectTrigger className="h-11 border-border bg-card shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -171,7 +171,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
                     value={watch('language_code')}
                     onValueChange={(v) => v && setValue('language_code', v)}
                   >
-                    <SelectTrigger className="h-11 border-border bg-white shadow-sm">
+                    <SelectTrigger className="h-11 border-border bg-card shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -193,7 +193,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
                 v && setValue('study_type', v as FormValues['study_type'])
               }
             >
-              <SelectTrigger className="h-11 border-border bg-white shadow-sm">
+              <SelectTrigger className="h-11 border-border bg-card shadow-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -209,7 +209,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
               <Label className="pp-label">Completes Goal</Label>
               <Input
                 type="number"
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-card shadow-sm"
                 {...register('completes_goal', { valueAsNumber: true })}
               />
             </div>
@@ -217,7 +217,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
               <Label className="pp-label">Expected LOI (min)</Label>
               <Input
                 type="number"
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-card shadow-sm"
                 {...register('expected_loi_minutes', { valueAsNumber: true })}
               />
             </div>
@@ -227,7 +227,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
                 type="number"
                 min={1}
                 max={100}
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-card shadow-sm"
                 {...register('expected_ir_pct', { valueAsNumber: true })}
               />
             </div>
@@ -235,7 +235,7 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
               <Label className="pp-label">Days in Field</Label>
               <Input
                 type="number"
-                className="h-11 border-border bg-white shadow-sm"
+                className="h-11 border-border bg-card shadow-sm"
                 {...register('days_in_field', { valueAsNumber: true })}
               />
             </div>
@@ -244,17 +244,17 @@ export function NewTGModal({ projectId, open, onOpenChange }: NewTGModalProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="pp-label">Start Date</Label>
-              <Input type="date" className="h-11 border-border bg-white shadow-sm" {...register('start_date')} />
+              <Input type="date" className="h-11 border-border bg-card shadow-sm" {...register('start_date')} />
             </div>
             <div className="space-y-2">
               <Label className="pp-label">End Date</Label>
-              <Input type="date" className="h-11 border-border bg-white shadow-sm" {...register('end_date')} />
+              <Input type="date" className="h-11 border-border bg-card shadow-sm" {...register('end_date')} />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="pp-label">Live Survey URL</Label>
-            <Input className="h-11 border-border bg-white shadow-sm" {...register('live_survey_url')} />
+            <Input className="h-11 border-border bg-card shadow-sm" {...register('live_survey_url')} />
           </div>
 
               <div className="h-2" />
