@@ -1,3 +1,6 @@
+'use client'
+
+import { use } from 'react'
 import dynamic from 'next/dynamic'
 
 const TargetGroupDetailPageClient = dynamic(
@@ -15,9 +18,10 @@ const TargetGroupDetailPageClient = dynamic(
 export default function TargetGroupDetailPage({
   params,
 }: {
-  params: { id: string; tgId: string }
+  params: Promise<{ id: string; tgId: string }>
 }) {
+  const { id, tgId } = use(params)
   return (
-    <TargetGroupDetailPageClient projectId={params.id} tgId={params.tgId} />
+    <TargetGroupDetailPageClient projectId={id} tgId={tgId} />
   )
 }

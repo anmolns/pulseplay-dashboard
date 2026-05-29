@@ -1,3 +1,6 @@
+'use client'
+
+import { use } from 'react'
 import dynamic from 'next/dynamic'
 
 const ProjectDetailPageClient = dynamic(() => import('./ProjectDetailPageClient'), {
@@ -12,7 +15,8 @@ const ProjectDetailPageClient = dynamic(() => import('./ProjectDetailPageClient'
 export default function ProjectDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  return <ProjectDetailPageClient id={params.id} />
+  const { id } = use(params)
+  return <ProjectDetailPageClient id={id} />
 }
