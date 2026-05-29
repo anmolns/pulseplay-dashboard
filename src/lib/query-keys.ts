@@ -16,5 +16,7 @@ export const queryKeys = {
     ['profile-library', { category, search }] as const,
   profileAttribute: (id: string) => ['profile-library', id] as const,
   reports: ['reports'] as const,
+  report: (id: string) => ['reports', id] as const,
+  redemptions: (status?: string) => ['redemptions', status] as const,
   me: ['me'] as const,
 }

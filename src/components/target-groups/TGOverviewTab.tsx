@@ -8,7 +8,6 @@ import { queryKeys } from '@/lib/query-keys'
 import { useToast } from '@/hooks/use-toast'
 import {
   formatRate,
-  formatCpi,
   formatDate,
   formatLanguage,
 } from '@/lib/utils'
@@ -45,6 +44,20 @@ interface SettingRow {
   type?: 'text' | 'number' | 'date'
 }
 
+function cpiToInputValue(cpi?: string | null): string {
+  if (!cpi) return ''
+  const n = parseFloat(cpi)
+  return Number.isFinite(n) ? n.toFixed(2) : ''
+}
+
+function parseCpiField(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  const n = parseFloat(trimmed)
+  if (!Number.isFinite(n) || n < 0) return null
+  return n.toFixed(2)
+}
+
 export function TGOverviewTab({
   projectId,
   tgId,
@@ -59,6 +72,17 @@ export function TGOverviewTab({
   const [editingField, setEditingField] = useState<SettingField | null>(null)
   const [editValue, setEditValue] = useState('')
   const [rateCardOpen, setRateCardOpen] = useState(false)
+  const [baseCpi, setBaseCpi] = useState('')
+  const [budgetCap, setBudgetCap] = useState('')
+  const [boostCpi, setBoostCpi] = useState('')
+  const [maxCpi, setMaxCpi] = useState('')
+
+  useEffect(() => {
+    setBaseCpi(cpiToInputValue(tg.base_cpi))
+    setBudgetCap(cpiToInputValue(tg.budget_cap))
+    setBoostCpi(cpiToInputValue(tg.boost_cpi))
+    setMaxCpi(cpiToInputValue(tg.max_cpi))
+  }, [tg.base_cpi, tg.budget_cap, tg.boost_cpi, tg.max_cpi])
 
   // Allow header pricing dropdown to open this modal via `?rateCard=1`.
   // We must do this in an effect (not during render), and we should clear the
@@ -99,6 +123,49 @@ export function TGOverviewTab({
       })
       setEditingField(null)
       toast({ title: 'Saved' })
+    },
+    onError: (err: Error) => {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const pricingMutation = useMutation({
+    mutationFn: async () => {
+      const parsedBase = parseCpiField(baseCpi)
+      if (!parsedBase) {
+        throw new Error('Base CPI is required')
+      }
+
+      const payload = {
+        base_cpi: parsedBase,
+        budget_cap: parseCpiField(budgetCap),
+        boost_cpi: parseCpiField(boostCpi),
+        max_cpi: parseCpiField(maxCpi),
+      }
+
+      const { data } = await api.patch<TargetGroup>(
+        `/projects/${projectId}/target-groups/${tgId}`,
+        payload
+      )
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKeys.targetGroup(projectId, tgId), data)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.targetGroup(projectId, tgId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.changelog(projectId, tgId),
+      })
+      setBaseCpi(cpiToInputValue(data.base_cpi))
+      setBudgetCap(cpiToInputValue(data.budget_cap))
+      setBoostCpi(cpiToInputValue(data.boost_cpi))
+      setMaxCpi(cpiToInputValue(data.max_cpi))
+      toast({ title: 'Pricing updated' })
     },
     onError: (err: Error) => {
       toast({
@@ -261,20 +328,79 @@ export function TGOverviewTab({
             <CardTitle className="text-base text-foreground">Pricing</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Base CPI</span>
-                <span className="font-medium">{formatCpi(tg.base_cpi)}</span>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="shrink-0 text-muted-foreground">Base CPI</span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    className="h-9 w-[120px] border-border bg-card text-right text-sm shadow-sm"
+                    value={baseCpi}
+                    onChange={(e) => setBaseCpi(e.target.value)}
+                  />
+                  <span className="text-muted-foreground">SEK</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Boost CPI</span>
-                <span className="font-medium">{formatCpi(tg.boost_cpi)}</span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="shrink-0 text-muted-foreground">Budget Cap</span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="Optional"
+                    className="h-9 w-[120px] border-border bg-card text-right text-sm shadow-sm"
+                    value={budgetCap}
+                    onChange={(e) => setBudgetCap(e.target.value)}
+                  />
+                  <span className="text-muted-foreground">SEK</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Max CPI</span>
-                <span className="font-medium">{formatCpi(tg.max_cpi)}</span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="shrink-0 text-muted-foreground">Boost CPI</span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="Optional"
+                    className="h-9 w-[120px] border-border bg-card text-right text-sm shadow-sm"
+                    value={boostCpi}
+                    onChange={(e) => setBoostCpi(e.target.value)}
+                  />
+                  <span className="text-muted-foreground">SEK</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="shrink-0 text-muted-foreground">Max CPI</span>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="Optional"
+                    className="h-9 w-[120px] border-border bg-card text-right text-sm shadow-sm"
+                    value={maxCpi}
+                    onChange={(e) => setMaxCpi(e.target.value)}
+                  />
+                  <span className="text-muted-foreground">SEK</span>
+                </div>
               </div>
             </div>
+            <Button
+              className="w-full"
+              disabled={pricingMutation.isPending}
+              onClick={() => pricingMutation.mutate()}
+            >
+              {pricingMutation.isPending ? 'Applying…' : 'Apply'}
+            </Button>
             <Button
               variant="outline"
               className="w-full border-border bg-card text-foreground hover:bg-secondary/60"

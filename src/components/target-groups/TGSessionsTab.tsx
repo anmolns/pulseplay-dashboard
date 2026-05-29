@@ -1,10 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Info } from 'lucide-react'
+import { ChevronRight, Download, Filter, Loader2, Users } from 'lucide-react'
 import api from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
+import {
+  QUALITY_FILTERS,
+  countSpeeders,
+  isFraudHoldSession,
+  type QualityFilter,
+} from '@/lib/session-tracking'
+import { downloadSessionsCsv } from '@/lib/sessions-export'
 import {
   formatDateTime,
   formatDuration,
@@ -12,14 +19,6 @@ import {
   formatShortId,
 } from '@/lib/utils'
 import type { Session, SessionStatus } from '@/types'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { sessionStatusClass } from '@/lib/status-styles'
@@ -30,6 +29,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/hooks/use-toast'
+import {
+  SessionDetailDialog,
+  SessionDeviceCell,
+  SessionQualityBadge,
+  SessionRespondentCell,
+} from './SessionDetailDialog'
 
 const STATUSES: (SessionStatus | 'all')[] = [
   'all',
@@ -44,21 +52,27 @@ const STATUSES: (SessionStatus | 'all')[] = [
   'security_terminated',
 ]
 
-const COL_COUNT = 9
-
 interface TGSessionsTabProps {
   projectId: string
   tgId: string
 }
 
 export function TGSessionsTab({ projectId, tgId }: TGSessionsTabProps) {
+  const { toast } = useToast()
   const [status, setStatus] = useState<string>('all')
   const [mode, setMode] = useState<string>('all')
+  const [quality, setQuality] = useState<QualityFilter>('all')
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
+  const [exporting, setExporting] = useState(false)
 
-  const filters = {
-    ...(status !== 'all' ? { status } : {}),
-    ...(mode !== 'all' ? { mode } : {}),
-  }
+  const filters = useMemo(
+    () => ({
+      ...(status !== 'all' ? { status } : {}),
+      ...(mode !== 'all' ? { mode } : {}),
+      ...(quality !== 'all' ? { quality } : {}),
+    }),
+    [status, mode, quality]
+  )
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.sessions(projectId, tgId, filters),
@@ -66,6 +80,7 @@ export function TGSessionsTab({ projectId, tgId }: TGSessionsTabProps) {
       const params = new URLSearchParams({ limit: '50', offset: '0' })
       if (status !== 'all') params.set('status', status)
       if (mode !== 'all') params.set('mode', mode)
+      if (quality !== 'all') params.set('quality', quality)
       const { data } = await api.get<Session[]>(
         `/projects/${projectId}/target-groups/${tgId}/sessions?${params}`
       )
@@ -73,143 +88,286 @@ export function TGSessionsTab({ projectId, tgId }: TGSessionsTabProps) {
     },
   })
 
+  const sessions = useMemo(() => {
+    if (!data) return data
+    if (quality === 'all') return data
+    return data.filter((s) => s.quality_flag?.toLowerCase() === quality)
+  }, [data, quality])
+
+  const speedersInView = countSpeeders(sessions)
+  const hasActiveFilters = status !== 'all' || mode !== 'all' || quality !== 'all'
+
+  const handleExportCsv = async () => {
+    setExporting(true)
+    try {
+      await downloadSessionsCsv(projectId, tgId, {
+        status: 'completed',
+        mode: mode !== 'all' ? mode : undefined,
+      })
+      toast({ title: 'Export started', description: 'Your CSV download should begin shortly.' })
+    } catch (err) {
+      toast({
+        title: 'Export failed',
+        description: err instanceof Error ? err.message : 'Could not download sessions',
+        variant: 'destructive',
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-3 rounded-lg border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-        <p>
-          <span className="font-medium text-foreground">Respondent ID</span> is only
-          stored when you pass{' '}
-          <code className="rounded bg-background px-1 py-0.5 text-xs text-foreground">
-            respondent_id
-          </code>{' '}
-          in{' '}
-          <code className="rounded bg-background px-1 py-0.5 text-xs text-foreground">
-            POST /track/session
-          </code>{' '}
-          or in the S2S webhook body on completion. Browser redirect callbacks
-          (complete / terminate) do not add a panelist ID by themselves — use the
-          session token in the <span className="font-medium text-foreground">Session</span>{' '}
-          column to match rows until then.
-        </p>
-      </div>
+      {/* Toolbar */}
+      <div className="rounded-xl border border-border bg-card p-4 shadow-card">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">Filter sessions</h3>
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Click a row for full device, quality, and respondent details.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 border-border"
+              disabled={exporting}
+              onClick={handleExportCsv}
+            >
+              {exporting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Export CSV
+            </Button>
+            {sessions && (
+              <span className="rounded-full border border-border bg-secondary/60 px-3 py-1 text-xs font-medium text-muted-foreground">
+                <Users className="mr-1 inline h-3 w-3" />
+                {sessions.length} shown
+              </span>
+            )}
+            {speedersInView > 0 && (
+              <span className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-400">
+                {speedersInView} speeder{speedersInView !== 1 ? 's' : ''} in view
+              </span>
+            )}
+          </div>
+        </div>
 
-      <div className="flex gap-3">
-        <Select value={status} onValueChange={(v) => setStatus(v ?? 'all')}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s === 'all' ? 'All statuses' : s.replace(/_/g, ' ')}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={mode} onValueChange={(v) => setMode(v ?? 'all')}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Mode" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All modes</SelectItem>
-            <SelectItem value="live">Live</SelectItem>
-            <SelectItem value="test">Test</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Session</TableHead>
-            <TableHead>Respondent ID</TableHead>
-            <TableHead>Mode</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead>Started</TableHead>
-            <TableHead>Completed</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Reason</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading &&
-            Array.from({ length: 5 }).map((_, i) => (
-              <TableRow key={i}>
-                {Array.from({ length: COL_COUNT }).map((__, j) => (
-                  <TableCell key={j}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <FilterField label="Status">
+            <Select value={status} onValueChange={(v) => setStatus(v ?? 'all')}>
+              <SelectTrigger className="h-10 w-full border-border bg-secondary/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s === 'all' ? 'All statuses' : s.replace(/_/g, ' ')}
+                  </SelectItem>
                 ))}
-              </TableRow>
-            ))}
-          {isError && (
-            <TableRow>
-              <TableCell
-                colSpan={COL_COUNT}
-                className="text-center text-red-400"
-              >
-                Failed to load sessions.
-              </TableCell>
-            </TableRow>
-          )}
-          {data?.map((session) => (
-            <TableRow key={session.id}>
-              <TableCell
-                className="font-mono text-xs text-foreground"
-                title={session.id}
-              >
-                {formatShortId(session.id)}
-              </TableCell>
-              <TableCell className="text-sm text-foreground">
-                {session.respondent_id ? (
-                  <span className="font-mono">{session.respondent_id}</span>
-                ) : (
-                  <span className="text-muted-foreground">Not assigned</span>
-                )}
-              </TableCell>
-              <TableCell className="capitalize text-foreground">
-                {session.mode}
-              </TableCell>
-              <TableCell>
-                <StatusBadge
-                  label={session.status.replace(/_/g, ' ')}
-                  className={sessionStatusClass(session.status)}
-                />
-              </TableCell>
-              <TableCell className="text-sm text-foreground">
-                {formatLabel(session.completion_source)}
-              </TableCell>
-              <TableCell className="text-sm text-foreground">
-                {formatDateTime(session.started_at)}
-              </TableCell>
-              <TableCell className="text-sm text-foreground">
-                {formatDateTime(session.completed_at)}
-              </TableCell>
-              <TableCell className="text-sm text-foreground">
-                {formatDuration(session.completion_time_ms)}
-              </TableCell>
-              <TableCell
-                className="max-w-[160px] truncate text-sm text-muted-foreground"
-                title={session.reason_label}
-              >
-                {session.reason_label ?? '—'}
-              </TableCell>
-            </TableRow>
-          ))}
-          {data?.length === 0 && !isLoading && (
-            <TableRow>
-              <TableCell
-                colSpan={COL_COUNT}
-                className="py-8 text-center text-muted-foreground"
-              >
-                No sessions found.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+              </SelectContent>
+            </Select>
+          </FilterField>
+          <FilterField label="Mode">
+            <Select value={mode} onValueChange={(v) => setMode(v ?? 'all')}>
+              <SelectTrigger className="h-10 w-full border-border bg-secondary/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All modes</SelectItem>
+                <SelectItem value="live">Live</SelectItem>
+                <SelectItem value="test">Test</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterField>
+          <FilterField label="Quality">
+            <Select
+              value={quality}
+              onValueChange={(v) => setQuality((v ?? 'all') as QualityFilter)}
+            >
+              <SelectTrigger className="h-10 w-full border-border bg-secondary/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {QUALITY_FILTERS.map((q) => (
+                  <SelectItem key={q} value={q}>
+                    {q === 'all' ? 'All quality' : q.charAt(0).toUpperCase() + q.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FilterField>
+        </div>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="mt-3 text-xs font-medium text-primary hover:underline"
+            onClick={() => {
+              setStatus('all')
+              setMode('all')
+              setQuality('all')
+            }}
+          >
+            Clear all filters
+          </button>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[960px] text-sm">
+            <thead>
+              <tr className="border-b border-border bg-secondary/40">
+                {[
+                  'Session',
+                  'Respondent',
+                  'Device',
+                  'Quality',
+                  'Status',
+                  'Timeline',
+                  '',
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className={cn(
+                      'px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground',
+                      h === '' && 'w-10'
+                    )}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading &&
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-border/60">
+                    {Array.from({ length: 7 }).map((__, j) => (
+                      <td key={j} className="px-4 py-3">
+                        <Skeleton className="h-5 w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              {isError && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-12 text-center text-red-400">
+                    Failed to load sessions.
+                  </td>
+                </tr>
+              )}
+              {sessions?.map((session, idx) => {
+                const fraudHold = isFraudHoldSession(session)
+                return (
+                <tr
+                  key={session.id}
+                  className={cn(
+                    'cursor-pointer border-b border-border/60 transition-colors hover:bg-primary/5',
+                    fraudHold && 'bg-red-500/10 hover:bg-red-500/15',
+                    !fraudHold && idx % 2 === 1 && 'bg-secondary/20'
+                  )}
+                  onClick={() => setSelectedSession(session)}
+                >
+                  <td className="px-4 py-3">
+                    <span
+                      className="font-mono text-xs text-foreground"
+                      title={session.id}
+                    >
+                      {formatShortId(session.id, 10)}
+                    </span>
+                    <p className="mt-0.5 text-[10px] uppercase text-muted-foreground">
+                      {session.mode}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <SessionRespondentCell session={session} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <SessionDeviceCell session={session} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <SessionQualityBadge
+                      flag={session.quality_flag}
+                      speedRatio={session.speed_ratio}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge
+                      label={session.status.replace(/_/g, ' ')}
+                      className={sessionStatusClass(session.status)}
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="text-xs text-foreground">
+                      {formatDateTime(session.started_at)}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      {session.completion_time_ms
+                        ? formatDuration(session.completion_time_ms)
+                        : session.completed_at
+                          ? formatDateTime(session.completed_at)
+                          : 'In progress'}
+                      {session.completion_source
+                        ? ` · ${formatLabel(session.completion_source)}`
+                        : ''}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    <ChevronRight className="h-4 w-4" />
+                  </td>
+                </tr>
+              )})}
+              {sessions?.length === 0 && !isLoading && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-16 text-center">
+                    <p className="font-medium text-foreground">No sessions found</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {hasActiveFilters
+                        ? 'Try clearing filters or check back after traffic starts.'
+                        : 'Sessions appear when respondents enter the survey.'}
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <SessionDetailDialog
+        session={selectedSession}
+        open={selectedSession != null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSession(null)
+        }}
+      />
+    </div>
+  )
+}
+
+function FilterField({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </label>
+      {children}
     </div>
   )
 }

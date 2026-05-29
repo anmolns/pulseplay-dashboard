@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
 import api from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
+import { hasProcessingReports, pollReportUntilTerminal } from '@/lib/reports'
 import type { Report } from '@/types'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -20,6 +21,8 @@ const NewReportModal = dynamic(
 export default function ReportsPageClient() {
   const [modalOpen, setModalOpen] = useState(false)
   const { set, clear } = useBreadcrumbs()
+  const queryClient = useQueryClient()
+  const pollersRef = useRef<Map<string, () => void>>(new Map())
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.reports,
@@ -27,12 +30,43 @@ export default function ReportsPageClient() {
       const { data } = await api.get<Report[]>('/reports')
       return data
     },
+    refetchInterval: (query) =>
+      hasProcessingReports(query.state.data) ? 2000 : false,
   })
+
+  useEffect(() => {
+    if (!data) return
+
+    const processingIds = new Set(
+      data.filter((r) => r.status === 'processing').map((r) => r.id)
+    )
+
+    pollersRef.current.forEach((stop, id) => {
+      if (!processingIds.has(id)) {
+        stop()
+        pollersRef.current.delete(id)
+      }
+    })
+
+    processingIds.forEach((id) => {
+      if (pollersRef.current.has(id)) return
+      const { stop } = pollReportUntilTerminal(id, queryClient)
+      pollersRef.current.set(id, stop)
+    })
+  }, [data, queryClient])
 
   useEffect(() => {
     set([{ label: 'Reports' }])
     return () => clear()
   }, [set, clear])
+
+  useEffect(() => {
+    const pollers = pollersRef.current
+    return () => {
+      pollers.forEach((stop) => stop())
+      pollers.clear()
+    }
+  }, [])
 
   return (
     <DashboardShell>

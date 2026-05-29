@@ -6,6 +6,7 @@ import Image from 'next/image'
 import {
   FolderKanban,
   FileBarChart,
+  Gift,
   HelpCircle,
   LogOut,
 } from 'lucide-react'
@@ -13,10 +14,14 @@ import { cn } from '@/lib/utils'
 import type { OrgUser } from '@/types'
 import logo from '@/assets/logo.png'
 
-const navItems = [
+const baseNavItems = [
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/reports', label: 'Reports', icon: FileBarChart },
-]
+] as const
+
+const adminNavItems = [
+  { href: '/redemptions', label: 'Redemptions', icon: Gift },
+] as const
 
 interface SidebarProps {
   user?: OrgUser
@@ -33,6 +38,10 @@ export function Sidebar({ user }: SidebarProps) {
   }
 
   const initials = user?.display_code ?? '??'
+  const navItems = [
+    ...baseNavItems,
+    ...(user?.role === 'admin' ? adminNavItems : []),
+  ]
 
   return (
     <aside className="flex h-screen w-[240px] shrink-0 flex-col border-r border-border bg-sidebar">

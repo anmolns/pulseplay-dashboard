@@ -11,6 +11,9 @@ export type SessionStatus =
   | 'fraud_hold'
   | 'never_reached_client'
   | 'security_terminated'
+export type SessionQualityFlag = 'normal' | 'fast' | 'speeder' | 'slow'
+export type DeviceType = 'mobile' | 'tablet' | 'desktop'
+export type RespondentTier = 'bronze' | 'silver' | 'gold' | 'platinum'
 export type ReportType = 'performance' | 'respondent_analysis' | 'reconciliation'
 export type ReportLevel = 'target_group' | 'project' | 'account'
 export type ReportStatus = 'processing' | 'completed' | 'failed'
@@ -74,6 +77,7 @@ export interface TargetGroup {
   daily_end_time?: string
   collects_pii: boolean
   base_cpi?: string
+  budget_cap?: string
   boost_cpi?: string
   max_cpi?: string
   prevent_overfilling: boolean
@@ -106,6 +110,14 @@ export interface ChangelogEntry {
   created_at: string
 }
 
+export interface SessionRespondent {
+  country_code?: string
+  tier?: RespondentTier | string
+  total_points?: number
+  surveys_completed?: number
+  interests?: string[]
+}
+
 export interface Session {
   id: string
   respondent_id?: string
@@ -116,6 +128,12 @@ export interface Session {
   started_at: string
   completed_at?: string
   completion_time_ms?: number
+  device_type?: DeviceType | string
+  browser?: string
+  os_name?: string
+  quality_flag?: SessionQualityFlag | string | null
+  speed_ratio?: number | null
+  respondent?: SessionRespondent | null
 }
 
 export interface ProfileAttribute {
@@ -181,8 +199,24 @@ export interface Report {
   status: ReportStatus
   requested_by: string
   file_url?: string
+  row_count?: number
   created_at: string
   completed_at?: string
+}
+
+export type RedemptionStatus = 'pending' | 'approved' | 'rejected' | 'paid'
+
+export interface Redemption {
+  id: string
+  respondent_id: string
+  /** May be 0 when API omits points or uses an alternate field (normalized in lib/redemptions). */
+  points: number
+  method: string
+  status: RedemptionStatus
+  requested_at: string
+  processed_at?: string
+  rejection_note?: string
+  created_at?: string
 }
 
 export interface CpiLookupResult {

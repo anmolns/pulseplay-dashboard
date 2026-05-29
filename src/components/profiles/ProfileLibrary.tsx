@@ -92,9 +92,12 @@ export function ProfileLibrary({
 
   return (
     <Card className="h-full border-border shadow-card">
-      <CardHeader>
-        <CardTitle className="text-base text-foreground">Profile Library</CardTitle>
-        <div className="flex gap-2 pt-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base text-foreground">Profile library</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Search and add targeting attributes to this target group.
+        </p>
+        <div className="flex gap-2 pt-3">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -126,40 +129,47 @@ export function ProfileLibrary({
         {isError && (
           <p className="text-sm text-red-600">Failed to load profile library.</p>
         )}
-        {data?.map((attr) => (
-          <div
-            key={attr.id}
-            className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5 shadow-sm"
-          >
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-brand-light px-2 py-0.5 text-xs font-semibold text-primary">
-                  {attr.code}
-                </span>
-                <span className="truncate text-sm font-medium text-foreground">
-                  {attr.code}
-                </span>
-              </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded-full border border-border px-2 py-0.5">
-                  {attr.category}
-                </span>
-                <span className="rounded-full border border-border px-2 py-0.5">
-                  {attr.response_type}
-                </span>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-primary/30 text-primary hover:bg-brand-light"
-              disabled={addMutation.isPending || appliedAttributeIds.has(attr.id)}
-              onClick={() => addMutation.mutate(attr.id)}
+        {data?.map((attr) => {
+          const title =
+            attr.translations?.find((t) => t.language_code === 'en')?.question_text ??
+            attr.code
+          const isAdded = appliedAttributeIds.has(attr.id)
+
+          return (
+            <div
+              key={attr.id}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/20 px-3 py-3 transition-colors hover:border-primary/20 hover:bg-secondary/40"
             >
-              {appliedAttributeIds.has(attr.id) ? 'Added' : '+ Add'}
-            </Button>
-          </div>
-        ))}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{title}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-md bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-primary">
+                    {attr.code}
+                  </span>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
+                    {attr.category}
+                  </span>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
+                    {attr.response_type.replace(/_/g, ' ')}
+                  </span>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant={isAdded ? 'secondary' : 'default'}
+                className={
+                  isAdded
+                    ? 'shrink-0 cursor-default opacity-70'
+                    : 'shrink-0 bg-primary text-primary-foreground hover:bg-primary/90'
+                }
+                disabled={addMutation.isPending || isAdded}
+                onClick={() => addMutation.mutate(attr.id)}
+              >
+                {isAdded ? 'Added' : 'Add'}
+              </Button>
+            </div>
+          )
+        })}
       </CardContent>
     </Card>
   )

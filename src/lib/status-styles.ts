@@ -53,6 +53,21 @@ export function sessionStatusClass(status: string): string {
   }
 }
 
+export function redemptionStatusClass(status: string): string {
+  switch (status) {
+    case 'pending':
+      return 'border-amber-500/30 bg-amber-500/10 text-amber-400 [&_.status-dot]:bg-amber-500'
+    case 'approved':
+      return 'border-blue-500/30 bg-blue-500/10 text-blue-400 [&_.status-dot]:bg-blue-500'
+    case 'rejected':
+      return 'border-red-500/30 bg-red-500/10 text-red-400 [&_.status-dot]:bg-red-500'
+    case 'paid':
+      return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 [&_.status-dot]:bg-emerald-500'
+    default:
+      return 'border-border bg-secondary text-muted-foreground [&_.status-dot]:bg-muted-foreground'
+  }
+}
+
 export function reportStatusClass(status: string): string {
   switch (status) {
     case 'completed':

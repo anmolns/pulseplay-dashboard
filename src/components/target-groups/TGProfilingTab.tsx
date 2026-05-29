@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Layers, Pencil, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { useToast } from '@/hooks/use-toast'
@@ -15,7 +15,6 @@ import {
   formatConditionSummary,
 } from '@/components/profiles/ConditionEditor'
 import { Badge } from '@/components/ui/badge'
-
 interface TGProfilingTabProps {
   projectId: string
   tgId: string
@@ -70,77 +69,94 @@ export function TGProfilingTab({ projectId, tgId }: TGProfilingTabProps) {
     p.attribute.translations?.find((t) => t.language_code === 'en')?.question_text ??
     p.attribute.code
 
+  const count = profiles?.length ?? 0
+
   return (
     <div className="grid gap-6 lg:grid-cols-5">
-      <div className="space-y-3 lg:col-span-2">
-        <h3 className="text-sm font-semibold text-foreground">Applied Profiles</h3>
-        {isLoading &&
-          Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
-          ))}
-        {isError && (
-          <p className="text-sm text-red-600">Failed to load profiles.</p>
-        )}
-        {profiles?.map((profile) => (
-          <div
-            key={profile.id}
-            className="rounded-xl border border-border bg-card p-5 shadow-card"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-foreground">
-                    {getTitle(profile)}
-                  </p>
-                  <Badge variant="secondary" className="rounded-full">
-                    {profile.attribute.category}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full">
-                    {profile.attribute.response_type}
-                  </Badge>
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatConditionSummary(profile)}
-                </p>
-              </div>
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 w-8 px-0"
-                  onClick={() => {
-                    setEditingProfile(profile)
-                    setEditorOpen(true)
-                  }}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 w-8 px-0 border-red-200 text-red-700 hover:bg-red-50"
-                  onClick={() => {
-                    const ok = window.confirm('Remove this profile from the target group?')
-                    if (!ok) return
-                    deleteMutation.mutate(profile.id)
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+      <div className="space-y-4 lg:col-span-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15">
+              <Layers className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Applied profiles</h3>
+              <p className="text-xs text-muted-foreground">Targeting on this target group</p>
             </div>
           </div>
-        ))}
-        {profiles?.length === 0 && !isLoading && (
-          <div className="rounded-xl border border-border bg-card px-5 py-10 text-center shadow-card">
-            <p className="font-medium text-foreground">
-              No profiling criteria added yet.
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Browse the library on the right to add attributes.
-            </p>
-          </div>
-        )}
+          <Badge variant="secondary" className="rounded-full">
+            {count} active
+          </Badge>
+        </div>
+
+        <div className="space-y-3">
+          {isLoading &&
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            ))}
+          {isError && (
+            <p className="text-sm text-red-400">Failed to load profiles.</p>
+          )}
+          {profiles?.map((profile) => (
+            <div
+              key={profile.id}
+              className="group rounded-xl border border-border bg-card p-4 shadow-card transition-colors hover:border-primary/20"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold leading-snug text-foreground">
+                    {getTitle(profile)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <Badge variant="secondary" className="rounded-md text-[10px]">
+                      {profile.attribute.category}
+                    </Badge>
+                    <Badge variant="outline" className="rounded-md text-[10px]">
+                      {profile.attribute.response_type.replace(/_/g, ' ')}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 rounded-lg bg-secondary/50 px-3 py-2 text-sm text-foreground">
+                    {formatConditionSummary(profile)}
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-1 opacity-80 transition-opacity group-hover:opacity-100">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 w-8 border-border bg-secondary/40 px-0 hover:bg-secondary"
+                    onClick={() => {
+                      setEditingProfile(profile)
+                      setEditorOpen(true)
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 w-8 border-red-500/30 px-0 text-red-400 hover:bg-red-500/10"
+                    onClick={() => {
+                      const ok = window.confirm('Remove this profile from the target group?')
+                      if (!ok) return
+                      deleteMutation.mutate(profile.id)
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {profiles?.length === 0 && !isLoading && (
+            <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-12 text-center">
+              <Layers className="mx-auto h-8 w-8 text-muted-foreground/50" />
+              <p className="mt-3 font-medium text-foreground">No criteria yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add attributes from the library →
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="lg:col-span-3">

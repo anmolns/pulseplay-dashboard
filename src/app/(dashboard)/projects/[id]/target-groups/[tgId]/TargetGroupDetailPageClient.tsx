@@ -5,19 +5,27 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { useToast } from '@/hooks/use-toast'
-import type { Project, TargetGroup, TGStatus } from '@/types'
+import type { Project, Session, TargetGroup, TGStatus } from '@/types'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { tgStatusClass } from '@/lib/status-styles'
 import { formatCpi, formatRate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TGOverviewTab } from '@/components/target-groups/TGOverviewTab'
 import { TGProfilingTab } from '@/components/target-groups/TGProfilingTab'
 import { TGSessionsTab } from '@/components/target-groups/TGSessionsTab'
 import { TGChangelogTab } from '@/components/target-groups/TGChangelogTab'
+import { TGStatsBar } from '@/components/target-groups/TGStatsBar'
+import { TGTabNav } from '@/components/target-groups/TGTabNav'
+import { countFraudHolds, countSpeeders } from '@/lib/session-tracking'
+import {
+  TGBudgetPausedBanner,
+  TGBudgetSpendBar,
+  calculateBudgetSpend,
+} from '@/components/target-groups/TGBudgetSpendBar'
 import { useCpiCalc } from '@/components/pricing/CpiCalcContext'
 import { useBreadcrumbs } from '@/components/layout/BreadcrumbsContext'
 
@@ -49,6 +57,36 @@ export default function TargetGroupDetailPageClient({
       )
       return data
     },
+  })
+
+  const { data: speederSessions } = useQuery({
+    queryKey: queryKeys.sessions(projectId, tgId, { quality: 'speeder' }),
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: '200', offset: '0', quality: 'speeder' })
+      const { data } = await api.get<Session[]>(
+        `/projects/${projectId}/target-groups/${tgId}/sessions?${params}`
+      )
+      return data
+    },
+    enabled: !!tg,
+    staleTime: 30_000,
+  })
+
+  const { data: fraudSessions } = useQuery({
+    queryKey: queryKeys.sessions(projectId, tgId, { status: 'fraud_hold' }),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        limit: '200',
+        offset: '0',
+        status: 'fraud_hold',
+      })
+      const { data } = await api.get<Session[]>(
+        `/projects/${projectId}/target-groups/${tgId}/sessions?${params}`
+      )
+      return data
+    },
+    enabled: !!tg,
+    staleTime: 30_000,
   })
 
   useEffect(() => {
@@ -119,7 +157,7 @@ export default function TargetGroupDetailPageClient({
             </Button>
             <Button
               variant="outline"
-              className="border-red-200 text-red-700 hover:bg-red-50"
+              className="border-red-500/40 text-red-400 hover:bg-red-500/10"
               onClick={() => statusMutation.mutate('closed')}
             >
               Close
@@ -137,7 +175,7 @@ export default function TargetGroupDetailPageClient({
             </Button>
             <Button
               variant="outline"
-              className="border-red-200 text-red-700 hover:bg-red-50"
+              className="border-red-500/40 text-red-400 hover:bg-red-500/10"
               onClick={() => statusMutation.mutate('closed')}
             >
               Close
@@ -151,6 +189,13 @@ export default function TargetGroupDetailPageClient({
 
   const completes = tg?.stats?.completes_count ?? 0
   const goal = tg?.completes_goal ?? 0
+  const speederCount = countSpeeders(speederSessions)
+  const fraudCount = countFraudHolds(fraudSessions)
+  const budgetCapNum = tg?.budget_cap ? parseFloat(tg.budget_cap) : NaN
+  const hasBudgetCap = Number.isFinite(budgetCapNum) && budgetCapNum > 0
+  const budgetSpend = calculateBudgetSpend(completes, tg?.base_cpi)
+  const showBudgetPausedBanner =
+    tg?.status === 'paused' && hasBudgetCap && budgetSpend >= budgetCapNum
 
   return (
     <DashboardShell>
@@ -175,37 +220,32 @@ export default function TargetGroupDetailPageClient({
               }
             />
 
+            {showBudgetPausedBanner && <TGBudgetPausedBanner />}
+
+            {tg && hasBudgetCap && (
+              <TGBudgetSpendBar spend={budgetSpend} cap={budgetCapNum} />
+            )}
+
             {tg && (
-              <div className="mb-8 flex flex-wrap gap-8 border-b border-border pb-6">
-                <Metric label="Completes" value={`${completes.toLocaleString()}${goal ? ` / ${goal}` : ''}`} highlight />
-                <Metric label="Conversion" value={formatRate(tg.stats?.conversion_rate)} />
-                <Metric label="CPI" value={formatCpi(tg.base_cpi)} />
-                <Metric
-                  label="Incidence"
-                  value={formatRate(tg.stats?.incidence_rate_actual)}
-                />
-              </div>
+              <TGStatsBar
+                completes={completes}
+                goal={goal}
+                conversion={formatRate(tg.stats?.conversion_rate)}
+                cpi={formatCpi(tg.base_cpi)}
+                incidence={formatRate(tg.stats?.incidence_rate_actual)}
+                speederCount={speederCount}
+                fraudCount={fraudCount}
+              />
             )}
           </>
         )}
 
         {tg && (
-          <Tabs defaultValue="overview">
-            <TabsList
-              variant="line"
-              className="mb-6 h-auto w-full justify-start gap-8 rounded-none border-b border-border bg-transparent p-0"
-            >
-              {['overview', 'profiling', 'sessions', 'changelog'].map((tab) => (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  className="rounded-none border-b-2 border-transparent px-0 pb-3 capitalize shadow-none data-active:border-primary data-active:text-primary"
-                >
-                  {tab}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <TabsContent value="overview">
+          <Tabs defaultValue="overview" className="space-y-0">
+            <div className="rounded-xl border border-border bg-card shadow-card">
+              <TGTabNav />
+              <div className="p-6">
+            <TabsContent value="overview" className="mt-0">
               <TGOverviewTab
                 projectId={projectId}
                 tgId={tgId}
@@ -213,43 +253,20 @@ export default function TargetGroupDetailPageClient({
                 businessUnitId={project?.business_unit_id}
               />
             </TabsContent>
-            <TabsContent value="profiling">
+            <TabsContent value="profiling" className="mt-0">
               <TGProfilingTab projectId={projectId} tgId={tgId} />
             </TabsContent>
-            <TabsContent value="sessions">
+            <TabsContent value="sessions" className="mt-0">
               <TGSessionsTab projectId={projectId} tgId={tgId} />
             </TabsContent>
-            <TabsContent value="changelog">
+            <TabsContent value="changelog" className="mt-0">
               <TGChangelogTab projectId={projectId} tgId={tgId} />
             </TabsContent>
+              </div>
+            </div>
           </Tabs>
         )}
       </div>
     </DashboardShell>
-  )
-}
-
-function Metric({
-  label,
-  value,
-  highlight,
-}: {
-  label: string
-  value: string
-  highlight?: boolean
-}) {
-  return (
-    <div>
-      <p className="pp-label mb-1">{label}</p>
-      <p
-        className={
-          highlight
-            ? 'text-lg font-semibold text-primary'
-            : 'text-lg font-semibold text-foreground'
-        }
-      >
-        {value}
-      </p>
-    </div>
   )
 }
