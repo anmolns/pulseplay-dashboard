@@ -2,6 +2,8 @@
 
 import { AlertTriangle, BarChart3, ShieldAlert, Target, TrendingUp, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { FeasibilityResult } from '@/types'
+import { FeasibilityBadge } from './FeasibilityBadge'
 
 interface TGStatsBarProps {
   completes: number
@@ -11,6 +13,8 @@ interface TGStatsBarProps {
   incidence: string
   speederCount: number
   fraudCount: number
+  feasibilityData?: FeasibilityResult | null
+  feasibilityLoading?: boolean
 }
 
 export function TGStatsBar({
@@ -21,11 +25,14 @@ export function TGStatsBar({
   incidence,
   speederCount,
   fraudCount,
+  feasibilityData,
+  feasibilityLoading,
 }: TGStatsBarProps) {
   const completePct = goal && goal > 0 ? Math.min(100, Math.round((completes / goal) * 100)) : null
 
   return (
-    <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+      <FeasibilityBadge data={feasibilityData} isLoading={feasibilityLoading} />
       <StatCard
         icon={Target}
         label="Completes"

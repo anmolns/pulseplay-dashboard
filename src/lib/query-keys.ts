@@ -17,6 +17,10 @@ export const queryKeys = {
   profileAttribute: (id: string) => ['profile-library', id] as const,
   reports: ['reports'] as const,
   report: (id: string) => ['reports', id] as const,
+  feasibility: (pid: string, tgId: string) =>
+    ['projects', pid, 'target-groups', tgId, 'feasibility'] as const,
+  sessionSummary: (pid: string, tgId: string, mode: string) =>
+    ['projects', pid, 'target-groups', tgId, 'sessions', 'summary', mode] as const,
   redemptions: (status?: string) => ['redemptions', status] as const,
   me: ['me'] as const,
 }

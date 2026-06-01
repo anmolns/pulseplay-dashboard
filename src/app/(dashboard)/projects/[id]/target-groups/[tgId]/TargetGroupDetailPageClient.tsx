@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { queryKeys } from '@/lib/query-keys'
 import { useToast } from '@/hooks/use-toast'
-import type { Project, Session, TargetGroup, TGStatus } from '@/types'
+import type { FeasibilityResult, Project, Session, TargetGroup, TGProfile } from '@/types'
 import { DashboardShell } from '@/components/layout/DashboardShell'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { StatusBadge } from '@/components/ui/status-badge'
@@ -18,8 +18,10 @@ import { TGOverviewTab } from '@/components/target-groups/TGOverviewTab'
 import { TGProfilingTab } from '@/components/target-groups/TGProfilingTab'
 import { TGSessionsTab } from '@/components/target-groups/TGSessionsTab'
 import { TGChangelogTab } from '@/components/target-groups/TGChangelogTab'
+import { TGPerformanceTab } from '@/components/target-groups/TGPerformanceTab'
 import { TGStatsBar } from '@/components/target-groups/TGStatsBar'
 import { TGTabNav } from '@/components/target-groups/TGTabNav'
+import { TGStatusControl } from '@/components/target-groups/TGStatusControl'
 import { countFraudHolds, countSpeeders } from '@/lib/session-tracking'
 import {
   TGBudgetPausedBanner,
@@ -28,6 +30,7 @@ import {
 } from '@/components/target-groups/TGBudgetSpendBar'
 import { useCpiCalc } from '@/components/pricing/CpiCalcContext'
 import { useBreadcrumbs } from '@/components/layout/BreadcrumbsContext'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
 export default function TargetGroupDetailPageClient({
   projectId,
@@ -36,10 +39,24 @@ export default function TargetGroupDetailPageClient({
   projectId: string
   tgId: string
 }) {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
   const { setInputs } = useCpiCalc()
   const { set, clear } = useBreadcrumbs()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+
+  const saveDraftMutation = useMutation({
+    mutationFn: () =>
+      api.patch<TargetGroup>(`/projects/${projectId}/target-groups/${tgId}`, {
+        status: 'draft',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.targetGroup(projectId, tgId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.targetGroups(projectId) })
+      toast({ title: 'Saved as draft' })
+    },
+    onError: (e: Error) =>
+      toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  })
 
   const { data: project } = useQuery({
     queryKey: queryKeys.project(projectId),
@@ -89,6 +106,46 @@ export default function TargetGroupDetailPageClient({
     staleTime: 30_000,
   })
 
+  // Profiles count — needed for feasibility trigger
+  const { data: profiles } = useQuery({
+    queryKey: queryKeys.profiles(projectId, tgId),
+    queryFn: async () => {
+      const { data } = await api.get<TGProfile[]>(
+        `/projects/${projectId}/target-groups/${tgId}/profiles`
+      )
+      return data
+    },
+    enabled: !!tg,
+    staleTime: 30_000,
+  })
+
+  // Feasibility inputs — debounced 800ms
+  const profilesCount = profiles?.length ?? 0
+  const feasibilityInputs = {
+    country_code: tg?.country_code ?? null,
+    ir_pct: tg?.expected_ir_pct ?? null,
+    completes_goal: tg?.completes_goal ?? null,
+    profiles_count: profilesCount,
+  }
+  const debouncedFeasInputs = useDebouncedValue(feasibilityInputs, 800)
+
+  const hasGoal = (debouncedFeasInputs.completes_goal ?? 0) > 0
+
+  const { data: feasibility, isFetching: feasibilityLoading } = useQuery({
+    queryKey: [
+      ...queryKeys.feasibility(projectId, tgId),
+      debouncedFeasInputs,
+    ],
+    queryFn: async () => {
+      const { data } = await api.get<FeasibilityResult>(
+        `/projects/${projectId}/target-groups/${tgId}/feasibility`
+      )
+      return data
+    },
+    enabled: !!tg && hasGoal,
+    staleTime: 30_000,
+  })
+
   useEffect(() => {
     if (!tg) return
     setInputs({
@@ -108,85 +165,6 @@ export default function TargetGroupDetailPageClient({
     return () => clear()
   }, [set, clear, projectId, project?.name, tg?.name])
 
-  const statusMutation = useMutation({
-    mutationFn: async (status: TGStatus) => {
-      const { data } = await api.patch<TargetGroup>(
-        `/projects/${projectId}/target-groups/${tgId}`,
-        { status }
-      )
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.targetGroup(projectId, tgId),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.targetGroups(projectId),
-      })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.changelog(projectId, tgId),
-      })
-      toast({ title: 'Status updated' })
-    },
-    onError: (err: Error) => {
-      toast({
-        title: 'Error',
-        description: err.message,
-        variant: 'destructive',
-      })
-    },
-  })
-
-  const renderActions = () => {
-    if (!tg) return null
-    switch (tg.status) {
-      case 'draft':
-        return (
-          <Button
-            className="bg-primary hover:bg-primary/90"
-            onClick={() => statusMutation.mutate('live')}
-          >
-            Launch
-          </Button>
-        )
-      case 'live':
-        return (
-          <>
-            <Button variant="outline" onClick={() => statusMutation.mutate('paused')}>
-              Pause
-            </Button>
-            <Button
-              variant="outline"
-              className="border-red-500/40 text-red-400 hover:bg-red-500/10"
-              onClick={() => statusMutation.mutate('closed')}
-            >
-              Close
-            </Button>
-          </>
-        )
-      case 'paused':
-        return (
-          <>
-            <Button
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => statusMutation.mutate('live')}
-            >
-              Resume
-            </Button>
-            <Button
-              variant="outline"
-              className="border-red-500/40 text-red-400 hover:bg-red-500/10"
-              onClick={() => statusMutation.mutate('closed')}
-            >
-              Close
-            </Button>
-          </>
-        )
-      default:
-        return null
-    }
-  }
-
   const completes = tg?.stats?.completes_count ?? 0
   const goal = tg?.completes_goal ?? 0
   const speederCount = countSpeeders(speederSessions)
@@ -196,6 +174,9 @@ export default function TargetGroupDetailPageClient({
   const budgetSpend = calculateBudgetSpend(completes, tg?.base_cpi)
   const showBudgetPausedBanner =
     tg?.status === 'paused' && hasBudgetCap && budgetSpend >= budgetCapNum
+
+  // Feasibility state is unknown if no goal set or query hasn't returned yet
+  const effectiveFeasibility = hasGoal ? feasibility : null
 
   return (
     <DashboardShell>
@@ -213,10 +194,32 @@ export default function TargetGroupDetailPageClient({
                 ) : undefined
               }
               actions={
-                <div className="flex gap-2">
-                  <Button variant="outline">Save draft</Button>
-                  {renderActions()}
-                </div>
+                tg ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      disabled={saveDraftMutation.isPending}
+                      onClick={() => saveDraftMutation.mutate()}
+                    >
+                      {saveDraftMutation.isPending ? 'Saving…' : 'Save draft'}
+                    </Button>
+                    <TGStatusControl
+                      projectId={projectId}
+                      tgId={tgId}
+                      tg={tg}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      disabled={saveDraftMutation.isPending}
+                      onClick={() => saveDraftMutation.mutate()}
+                    >
+                      {saveDraftMutation.isPending ? 'Saving…' : 'Save draft'}
+                    </Button>
+                  </div>
+                )
               }
             />
 
@@ -235,6 +238,8 @@ export default function TargetGroupDetailPageClient({
                 incidence={formatRate(tg.stats?.incidence_rate_actual)}
                 speederCount={speederCount}
                 fraudCount={fraudCount}
+                feasibilityData={effectiveFeasibility}
+                feasibilityLoading={feasibilityLoading && hasGoal}
               />
             )}
           </>
@@ -245,23 +250,26 @@ export default function TargetGroupDetailPageClient({
             <div className="rounded-xl border border-border bg-card shadow-card">
               <TGTabNav />
               <div className="p-6">
-            <TabsContent value="overview" className="mt-0">
-              <TGOverviewTab
-                projectId={projectId}
-                tgId={tgId}
-                tg={tg}
-                businessUnitId={project?.business_unit_id}
-              />
-            </TabsContent>
-            <TabsContent value="profiling" className="mt-0">
-              <TGProfilingTab projectId={projectId} tgId={tgId} />
-            </TabsContent>
-            <TabsContent value="sessions" className="mt-0">
-              <TGSessionsTab projectId={projectId} tgId={tgId} />
-            </TabsContent>
-            <TabsContent value="changelog" className="mt-0">
-              <TGChangelogTab projectId={projectId} tgId={tgId} />
-            </TabsContent>
+                <TabsContent value="overview" className="mt-0">
+                  <TGOverviewTab
+                    projectId={projectId}
+                    tgId={tgId}
+                    tg={tg}
+                    businessUnitId={project?.business_unit_id}
+                  />
+                </TabsContent>
+                <TabsContent value="profiling" className="mt-0">
+                  <TGProfilingTab projectId={projectId} tgId={tgId} />
+                </TabsContent>
+                <TabsContent value="performance" className="mt-0">
+                  <TGPerformanceTab projectId={projectId} tgId={tgId} />
+                </TabsContent>
+                <TabsContent value="sessions" className="mt-0">
+                  <TGSessionsTab projectId={projectId} tgId={tgId} />
+                </TabsContent>
+                <TabsContent value="changelog" className="mt-0">
+                  <TGChangelogTab projectId={projectId} tgId={tgId} />
+                </TabsContent>
               </div>
             </div>
           </Tabs>

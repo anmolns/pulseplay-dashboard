@@ -226,6 +226,23 @@ export interface CpiLookupResult {
   ir_bracket: string
 }
 
+export interface FeasibilityResult {
+  feasible_count: number
+  status: 'ok' | 'low' | 'at_risk' | 'unknown'
+  base_population: number
+  applied_ir_pct: number
+  profiles_applied: number
+  country_code: string
+  completes_goal: number
+}
+
+export interface SessionSummaryRow {
+  status: string
+  reason_label: string | null
+  description: string
+  count: number
+}
+
 export interface LoginResponse {
   access_token: string
   token_type: string

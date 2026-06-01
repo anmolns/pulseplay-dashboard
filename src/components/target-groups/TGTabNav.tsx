@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 const TABS = [
   { value: 'overview', label: 'Overview' },
   { value: 'profiling', label: 'Profiling' },
+  { value: 'performance', label: 'Performance' },
   { value: 'sessions', label: 'Sessions' },
   { value: 'changelog', label: 'Changelog' },
 ] as const
